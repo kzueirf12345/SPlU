@@ -30,12 +30,14 @@ FLAGS += $(if $(DEBUG_),$(DEBUG_FLAGS),$(RELEASE_FLAGS))
 ADD_FLAGS =
 
 
-all: assembly_build assembly_start processor_build processor_start
+all: assembly_all processor_all
 
 build: assembly_build processor_build
 
 start: assembly_start processor_start
 
+
+assembly_all: assembly_build assembly_start
 
 assembly_start:
 	make ADD_FLAGS="$(ADD_FLAGS)" start -C ./assembly/
@@ -48,6 +50,8 @@ assembly_build:
 assembly_clean:
 	make ADD_FLAGS="$(ADD_FLAGS)" clean -C ./assembly/
 
+
+processor_all: processor_build processor_start
 
 processor_start:
 	make ADD_FLAGS="$(ADD_FLAGS)" start -C ./processor/

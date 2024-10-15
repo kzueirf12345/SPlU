@@ -53,7 +53,7 @@ $(PROJECT_NAME).out: $(OBJECTS_REL_PATH)
 	@$(COMPILER) $(FLAGS) -o $@ $^ -L../libs/logger -llogger
 
 $(BUILD_DIR)/%.o : $(SRC_DIR)/%.c | $(BUILD_DIRS) logger_build
-	@$(COMPILER) $(FLAGS) -I../libs -c -MMD -MP $< -o $@
+	@$(COMPILER) $(FLAGS) -I../utils -I../libs -c -MMD -MP $< -o $@
 
 -include $(DEPS_REL_PATH)
 

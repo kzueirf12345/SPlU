@@ -31,10 +31,10 @@ RELEASE_FLAGS = -DNDEBUG -O2
 FLAGS += $(if $(DEBUG_),$(DEBUG_FLAGS),$(RELEASE_FLAGS))
 ADD_FLAGS = -D HASH_PROTECT -D PENGUIN_PROTECT
 
-DIRS = 
+DIRS = input
 BUILD_DIRS = $(DIRS:%=$(BUILD_DIR)/%)
 
-SOURCES = main.c
+SOURCES = main.c input/input.c
 
 SOURCES_REL_PATH = $(SOURCES:%=$(SRC_DIR)/%)
 OBJECTS_REL_PATH = $(SOURCES:%.c=$(BUILD_DIR)/%.o)
@@ -51,10 +51,10 @@ build: $(PROJECT_NAME).out
 
 
 $(PROJECT_NAME).out: $(OBJECTS_REL_PATH)
-	@$(COMPILER) $(FLAGS) -o $@ $^ -L../libs/stack_on_array -lstack
+	@$(COMPILER) $(FLAGS) -o $@ $^ -L../libs/stack_on_array -lstack -L../libs/logger -llogger
 
-$(BUILD_DIR)/%.o : $(SRC_DIR)/%.c | $(BUILD_DIRS) stack_build
-	@$(COMPILER) $(FLAGS) -I../libs -c -MMD -MP $< -o $@
+$(BUILD_DIR)/%.o : $(SRC_DIR)/%.c | $(BUILD_DIRS) stack_build logger_build
+	@$(COMPILER) $(FLAGS) -I../utils -I../libs -c -MMD -MP $< -o $@
 
 -include $(DEPS_REL_PATH)
 
@@ -71,8 +71,17 @@ stack_clean:
 	make ADD_FLAGS="$(ADD_FLAGS)" clean -C ../libs/stack_on_array
 
 
+logger_rebuild: logger_build logger_clean
 
-clean_all: clean_obj clean_deps clean_out stack_clean
+logger_build:
+	make ADD_FLAGS="$(ADD_FLAGS)" build -C ../libs/logger
+
+logger_clean:
+	make ADD_FLAGS="$(ADD_FLAGS)" clean -C ../libs/logger
+
+
+
+clean_all: clean_obj clean_deps clean_out stack_clean logger_clean
 
 clean: clean_obj clean_deps clean_out
 
