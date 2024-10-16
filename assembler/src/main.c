@@ -6,6 +6,8 @@
 
 int main()
 {
+    enum AsmError asm_error_handler = ASM_ERROR_SUCCESS;
+
     if (logger_ctor())
     {
         fprintf(stderr, "Can't logger_ctor()\n");
@@ -24,7 +26,7 @@ int main()
     asm_code_t asm_code = {};
     asm_code_ctor("../assets/program.asm", &asm_code);
 
-    assembly(asm_code);
+    asm_error_handle(assembly(asm_code), asm_code_dtor(&asm_code); logger_dtor(););
 
     asm_code_dtor(&asm_code);
 

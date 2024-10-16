@@ -25,7 +25,7 @@ const char* asm_strerror(const enum AsmError asm_error);
         if (asm_error_handler)                                                                      \
         {                                                                                           \
             fprintf(stderr, "Can't " #call_func". Asm error: %s\n",                                 \
-                            input_strerror(asm_error_handler));                                     \
+                            asm_strerror(asm_error_handler));                                       \
             __VA_ARGS__                                                                             \
             return asm_error_handler;                                                               \
         }                                                                                           \

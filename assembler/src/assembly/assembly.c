@@ -5,6 +5,24 @@
 #include "assembly.h"
 #include "stack_on_array/libstack.h"
 
+#define CASE_ENUM_TO_STRING_(error) case error: return #error
+const char* asm_strerror(const enum AsmError input_error)
+{
+    switch (input_error)
+    {
+        CASE_ENUM_TO_STRING_(ASM_ERROR_SUCCESS);
+        CASE_ENUM_TO_STRING_(ASM_ERROR_STACK);
+        CASE_ENUM_TO_STRING_(ASM_ERROR_DIV_BY_ZERO);
+        CASE_ENUM_TO_STRING_(ASM_ERROR_STANDARD_ERRNO);
+        CASE_ENUM_TO_STRING_(ASM_ERROR_INCORRECT_CMND);
+        CASE_ENUM_TO_STRING_(ASM_ERROR_UNKNOWN);
+    default:
+        return "UNKNOWN_ASM_ERROR";
+    }
+    return "UNKNOWN_ASM_ERROR";
+}
+#undef CASE_ENUM_TO_STRING_
+
 enum ComndCode 
 {
     COMND_CODE_UNKNOWN  = 0,
