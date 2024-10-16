@@ -30,25 +30,25 @@ FLAGS += $(if $(DEBUG_),$(DEBUG_FLAGS),$(RELEASE_FLAGS))
 ADD_FLAGS =
 
 
-all: assembly_all processor_all
+all: assembler_all processor_all
 
-build: assembly_build processor_build
+build: assembler_build processor_build
 
-start: assembly_start processor_start
+start: assembler_start processor_start
 
 
-assembly_all: assembly_build assembly_start
+assembler_all: assembler_build assembler_start
 
-assembly_start:
-	make ADD_FLAGS="$(ADD_FLAGS)" start -C ./assembly/
+assembler_start:
+	make ADD_FLAGS="$(ADD_FLAGS)" start -C ./assembler/
 
-assembly_rebuild: assembly_clean assembly_build
+assembler_rebuild: assembler_clean assembler_build
 
-assembly_build:
-	make ADD_FLAGS="$(ADD_FLAGS)" build -C ./assembly/
+assembler_build:
+	make ADD_FLAGS="$(ADD_FLAGS)" build -C ./assembler/
 
-assembly_clean:
-	make ADD_FLAGS="$(ADD_FLAGS)" clean -C ./assembly/
+assembler_clean:
+	make ADD_FLAGS="$(ADD_FLAGS)" clean -C ./assembler/
 
 
 processor_all: processor_build processor_start
@@ -77,8 +77,8 @@ libs_clean:
 
 
 
-clean: assembly_clean processor_clean
+clean: assembler_clean processor_clean
 
 clean_all:
-	make ADD_FLAGS="$(ADD_FLAGS)" clean_all -C ./assembly/ && \
+	make ADD_FLAGS="$(ADD_FLAGS)" clean_all -C ./assembler/ && \
 	make ADD_FLAGS="$(ADD_FLAGS)" clean_all -C ./processor/

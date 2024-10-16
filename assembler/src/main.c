@@ -2,6 +2,7 @@
 
 #include "stack_on_array/libstack.h"
 #include "input/input.h"
+#include "assembly/assembly.h"
 
 int main()
 {
@@ -15,21 +16,20 @@ int main()
         fprintf(stderr, "Can't logger_set_level_details()\n");
         return EXIT_FAILURE;
     }
+    
+    printf("Hello assembly!\n");
 
-    stack_key_t stack = 0;
-    STACK_CTOR(&stack, 8, 0);
-    stack_dtor(&stack);
+// ----------------------
 
     asm_code_t asm_code = {};
     asm_code_ctor("../assets/program.asm", &asm_code);
-    for (size_t i = 0; i < asm_code.comnd_size; ++i)
-    {
-        fprintf(stderr, "%s\n", asm_code.comnds[i]);
-    }
+
+    assembly(asm_code);
+
     asm_code_dtor(&asm_code);
 
-    printf("Hello assembly!\n");
-    
+// ----------------------    
+
     if (logger_dtor())
     {
         fprintf(stderr, "Can't logger_dtor()\n");

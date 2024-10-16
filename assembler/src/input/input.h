@@ -1,8 +1,10 @@
-#ifndef SRC_INPUT_H
-#define SRC_INPUT_H
+#ifndef ASSEMBLER_SRC_INPUT_H
+#define ASSEMBLER_SRC_INPUT_H
 
 #include <stdio.h>
 #include <assert.h>
+
+#include "../asm_code/asm_code.h"
 
 
 enum InputError
@@ -27,17 +29,9 @@ const char* input_strerror(const enum InputError input_error);
     } while(0)
 
 
-typedef struct AsmCode
-{
-    char*  code;
-    size_t code_size;
-    size_t comnd_size;
-    char** comnds;
-} asm_code_t;
-
 
 enum InputError asm_code_ctor(const char* const input_filename, asm_code_t* const asm_code);
 void asm_code_dtor(asm_code_t* asm_code);
 
 
-#endif /*SRC_INPUT_H*/
+#endif /*ASSEMBLER_SRC_INPUT_H*/

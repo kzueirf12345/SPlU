@@ -1,6 +1,6 @@
 .PHONY: all clean
 
-PROJECT_NAME = assembly
+PROJECT_NAME = assembler
 
 BUILD_DIR = ./build
 SRC_DIR = ./src
@@ -31,10 +31,10 @@ RELEASE_FLAGS = -DNDEBUG -O2
 FLAGS += $(if $(DEBUG_),$(DEBUG_FLAGS),$(RELEASE_FLAGS))
 ADD_FLAGS = -D HASH_PROTECT -D PENGUIN_PROTECT
 
-DIRS = input
+DIRS = input assembly
 BUILD_DIRS = $(DIRS:%=$(BUILD_DIR)/%)
 
-SOURCES = main.c input/input.c
+SOURCES = main.c input/input.c assembly/assembly.c
 
 SOURCES_REL_PATH = $(SOURCES:%=$(SRC_DIR)/%)
 OBJECTS_REL_PATH = $(SOURCES:%.c=$(BUILD_DIR)/%.o)

@@ -1,10 +1,12 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "input.h"
 #include "utils.h"
 #include "logger/liblogger.h"
+#include "../asm_code/asm_code.h"
 
 #define CASE_ENUM_TO_STRING_(error) case error: return #error
 const char* input_strerror(const enum InputError input_error)
@@ -23,8 +25,9 @@ const char* input_strerror(const enum InputError input_error)
 
 static enum InputError fill_asm_code_string_count_and_split_ (asm_code_t* const asm_code);
 static enum InputError fill_asm_code_string_ptrs_            (asm_code_t* const asm_code);
-static enum InputError fill_asm_code_size_ (asm_code_t* const asm_code, FILE** const input_file);
-static enum InputError fill_asm_code_data_ (asm_code_t* const asm_code, FILE** const input_file);
+static enum InputError fill_asm_code_size_   (asm_code_t* const asm_code, FILE** const input_file);
+static enum InputError fill_asm_code_data_   (asm_code_t* const asm_code, FILE** const input_file);
+static enum InputError fill_asm_code_spaces_ (asm_code_t* const asm_code);
 
 
 enum InputError asm_code_ctor(const char* const input_filename, asm_code_t* const asm_code)
@@ -54,6 +57,7 @@ enum InputError asm_code_ctor(const char* const input_filename, asm_code_t* cons
 
     input_error_handle(fill_asm_code_string_count_and_split_(asm_code));
     input_error_handle(fill_asm_code_string_ptrs_           (asm_code));
+    input_error_handle(fill_asm_code_spaces_                (asm_code));
 
     return input_error_handler;
 }
@@ -119,13 +123,13 @@ static enum InputError fill_asm_code_string_count_and_split_ (asm_code_t* const 
     lassert(asm_code->code_size, "");
     lassert(asm_code->code, "");
 
-    asm_code->comnd_size = 1;
+    asm_code->comnds_size = 1;
     for (size_t ind = 0; ind < asm_code->code_size; ++ind)
     {
         if (asm_code->code[ind] == '\n')
         {
             asm_code->code[ind] = '\0';
-            ++asm_code->comnd_size;
+            ++asm_code->comnds_size;
         }
     }
 
@@ -137,9 +141,9 @@ static enum InputError fill_asm_code_string_ptrs_(asm_code_t* const asm_code)
     lassert(asm_code, "");
     lassert(asm_code->code_size, "");
     lassert(asm_code->code, "");
-    lassert(asm_code->comnd_size, "");
+    lassert(asm_code->comnds_size, "");
 
-    asm_code->comnds = (char**)calloc(asm_code->comnd_size, sizeof(*asm_code->comnds));
+    asm_code->comnds = (char**)calloc(asm_code->comnds_size, sizeof(*asm_code->comnds));
     if (!asm_code->comnds)
     {
         perror("Can't calloc memory for comnds");
@@ -166,6 +170,24 @@ static enum InputError fill_asm_code_string_ptrs_(asm_code_t* const asm_code)
     return INPUT_ERROR_SUCCESS;
 }
 
+static enum InputError fill_asm_code_spaces_ (asm_code_t* const asm_code)
+{
+    lassert(asm_code, "");
+    lassert(asm_code->code_size, "");
+    lassert(asm_code->code, "");
+
+    for (size_t cmnd_ind = 0; cmnd_ind < asm_code->comnds_size; ++cmnd_ind)
+    {
+        char* asm_code_ptr = strchr(asm_code->comnds[cmnd_ind], ' ');
+        while (asm_code_ptr)
+        {
+            *asm_code_ptr = '\0';
+            asm_code_ptr = strchr(asm_code_ptr + 1, ' ');
+        }
+    }
+
+    return INPUT_ERROR_SUCCESS;
+}
 
 
 void asm_code_dtor(asm_code_t* asm_code)
@@ -176,5 +198,5 @@ void asm_code_dtor(asm_code_t* asm_code)
     free(asm_code->comnds); IF_DEBUG(asm_code->comnds  = NULL;)
 
     IF_DEBUG(asm_code->code_size   = 0;)
-    IF_DEBUG(asm_code->comnd_size  = 0;)
+    IF_DEBUG(asm_code->comnds_size  = 0;)
 }
