@@ -2,6 +2,7 @@
 #define SRC_INPUT_H
 
 #include <stdio.h>
+#include <assert.h>
 
 
 enum InputError
@@ -9,6 +10,7 @@ enum InputError
     INPUT_ERROR_SUCCESS  = 0,
     INPUT_ERROR_FAILURE  = 1
 };
+static_assert(INPUT_ERROR_SUCCESS == 0);
 
 const char* input_strerror(const enum InputError input_error);
 
