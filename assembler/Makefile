@@ -31,10 +31,10 @@ RELEASE_FLAGS = -DNDEBUG -O2
 FLAGS += $(if $(DEBUG_),$(DEBUG_FLAGS),$(RELEASE_FLAGS))
 ADD_FLAGS = -D HASH_PROTECT -D PENGUIN_PROTECT
 
-DIRS = input assembly
+DIRS = assembly asm_code instructions
 BUILD_DIRS = $(DIRS:%=$(BUILD_DIR)/%)
 
-SOURCES = main.c input/input.c assembly/assembly.c
+SOURCES = main.c assembly/assembly.c asm_code/asm_code.c instructions/instructions.c
 
 SOURCES_REL_PATH = $(SOURCES:%=$(SRC_DIR)/%)
 OBJECTS_REL_PATH = $(SOURCES:%.c=$(BUILD_DIR)/%.o)
@@ -51,7 +51,7 @@ build: $(PROJECT_NAME).out
 
 
 $(PROJECT_NAME).out: $(OBJECTS_REL_PATH)
-	@$(COMPILER) $(FLAGS) -o $@ $^ -L../libs/stack_on_array -lstack -L../libs/logger -llogger
+	@$(COMPILER) $(FLAGS) -o $@ $^ -L../libs/logger -llogger
 
 $(BUILD_DIR)/%.o : $(SRC_DIR)/%.c | $(BUILD_DIRS) stack_build logger_build
 	@$(COMPILER) $(FLAGS) -I../utils -I../libs -c -MMD -MP $< -o $@
