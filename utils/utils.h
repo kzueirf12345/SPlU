@@ -22,7 +22,7 @@ enum Opcode
 {
     OPCODE_UNKNOWN  = 0,
     OPCODE_PUSH     = 1,
-    // OPCODE_POP      = 2,
+    OPCODE_POP      = 2,
 
     OPCODE_ADD      = 3,
     OPCODE_SUB      = 4,
