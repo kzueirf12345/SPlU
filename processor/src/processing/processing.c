@@ -142,7 +142,8 @@ static enum ProcessorError fill_processor_data_(processor_t* const processor, FI
 
 
 static void lassert_processor_init_(const processor_t* const processor);
-static operand_t* GetOperandAddr_(cmnd_t cmnd, processor_t* const processor);
+static operand_t* get_operand_addr_(cmnd_t cmnd, processor_t* const processor);
+static void jmp_condition_handle_(const bool condition, processor_t* const processor);
 
 #define STACK_ERROR_HANDLE_(call_func, ...)                                                         \
     do {                                                                                            \
@@ -165,14 +166,8 @@ enum ProcessorError processing(processor_t* const processor)
 
     while (!is_hlt && processor->ip < processor->instructs_size)
     {
-        // fprintf(stderr, "sizeof(cmnd_t): %zu\n", sizeof(cmnd_t));
-        // fprintf(stderr, "ip: %zu\n", processor->ip);
         const cmnd_t cmnd = *(cmnd_t*)(processor->instructs + processor->ip);
-        // fprintf(stderr, "processor->instructs: 0b%b\n", *(processor->instructs + processor->ip));
-        // fprintf(stderr, "cmnd: 0b%b\n", cmnd);
         ++processor->ip;
-
-        // fprintf(stderr, "opcode: %d\n", cmnd.opcode);
 
         // STACK_DUMB(stack, NULL);
 
@@ -180,7 +175,7 @@ enum ProcessorError processing(processor_t* const processor)
         {
             case OPCODE_PUSH:
             {
-                STACK_ERROR_HANDLE_(stack_push(&stack, GetOperandAddr_(cmnd, processor)),
+                STACK_ERROR_HANDLE_(stack_push(&stack, get_operand_addr_(cmnd, processor)),
                                     stack_dtor(&stack););
                 break;
             }
@@ -192,9 +187,12 @@ enum ProcessorError processing(processor_t* const processor)
                 operand_t pop_elem = 0;
                 STACK_ERROR_HANDLE_(stack_pop(&stack, &pop_elem), stack_dtor(&stack););
 
-                memcpy(GetOperandAddr_(cmnd, processor), &pop_elem, sizeof(pop_elem));
+                memcpy(get_operand_addr_(cmnd, processor), &pop_elem, sizeof(pop_elem));
                 break;
             }
+
+            //-----------------------------
+
             case OPCODE_ADD:
             {
                 lassert(stack_size(stack) >= 2, "");
@@ -215,8 +213,8 @@ enum ProcessorError processing(processor_t* const processor)
                 STACK_ERROR_HANDLE_(stack_pop(&stack, &second_num), stack_dtor(&stack););
                 STACK_ERROR_HANDLE_(stack_pop(&stack, &first_num),  stack_dtor(&stack););
 
-                const operand_t sum = first_num - second_num;
-                STACK_ERROR_HANDLE_(stack_push(&stack, &sum), stack_dtor(&stack););
+                const operand_t div = first_num - second_num;
+                STACK_ERROR_HANDLE_(stack_push(&stack, &div), stack_dtor(&stack););
                 break;
             }
             case OPCODE_MUL:
@@ -227,8 +225,8 @@ enum ProcessorError processing(processor_t* const processor)
                 STACK_ERROR_HANDLE_(stack_pop(&stack, &second_num), stack_dtor(&stack););
                 STACK_ERROR_HANDLE_(stack_pop(&stack, &first_num),  stack_dtor(&stack););
 
-                const operand_t sum = first_num * second_num;
-                STACK_ERROR_HANDLE_(stack_push(&stack, &sum), stack_dtor(&stack););
+                const operand_t mul = first_num * second_num;
+                STACK_ERROR_HANDLE_(stack_push(&stack, &mul), stack_dtor(&stack););
                 break;
             }
             case OPCODE_DIV:
@@ -239,16 +237,20 @@ enum ProcessorError processing(processor_t* const processor)
                 STACK_ERROR_HANDLE_(stack_pop(&stack, &second_num), stack_dtor(&stack););
                 STACK_ERROR_HANDLE_(stack_pop(&stack, &first_num),  stack_dtor(&stack););
 
+
                 if (second_num == 0)
                 {
                     fprintf(stderr, "Can't div by zero\n");
                     stack_dtor(&stack);
                     return PROCESSOR_ERROR_DIV_BY_ZERO;
                 }
-                const operand_t sum = first_num / second_num;
-                STACK_ERROR_HANDLE_(stack_push(&stack, &sum), stack_dtor(&stack););
+                const operand_t div = first_num / second_num;
+                STACK_ERROR_HANDLE_(stack_push(&stack, &div), stack_dtor(&stack););
                 break;
             }
+
+            //-----------------------------
+
             case OPCODE_OUT:
             {
                 lassert(stack_size(stack) >= 1, "");
@@ -267,7 +269,8 @@ enum ProcessorError processing(processor_t* const processor)
             case OPCODE_IN:
             {
                 operand_t in_num = 0;
-                if (scanf("In: " INOUT_OPERAND_CODE, &in_num) != 1)
+                printf("Input: ");
+                if (scanf(INOUT_OPERAND_CODE, &in_num) != 1)
                 {
                     perror("Can't scanf in_num");
                     stack_dtor(&stack);
@@ -276,6 +279,95 @@ enum ProcessorError processing(processor_t* const processor)
                 STACK_ERROR_HANDLE_(stack_push(&stack, &in_num), stack_dtor(&stack););
                 break;
             }
+
+            //-----------------------------
+
+            case OPCODE_JMP:
+            {
+                lassert(stack_size(stack) >= 2, "");
+
+                operand_t first_num = 0, second_num = 0;
+                STACK_ERROR_HANDLE_(stack_pop(&stack, &second_num), stack_dtor(&stack););
+                STACK_ERROR_HANDLE_(stack_pop(&stack, &first_num),  stack_dtor(&stack););
+
+                jmp_condition_handle_(true, processor);
+                break;
+            }
+            case OPCODE_JL:
+            {
+                lassert(stack_size(stack) >= 2, "");
+
+                operand_t first_num = 0, second_num = 0;
+                STACK_ERROR_HANDLE_(stack_pop(&stack, &second_num), stack_dtor(&stack););
+                STACK_ERROR_HANDLE_(stack_pop(&stack, &first_num),  stack_dtor(&stack););
+
+                const bool condition = first_num < second_num;
+                jmp_condition_handle_(condition, processor);
+                break;
+            }
+            case OPCODE_JLE:
+            {
+                lassert(stack_size(stack) >= 2, "");
+
+                operand_t first_num = 0, second_num = 0;
+                STACK_ERROR_HANDLE_(stack_pop(&stack, &second_num), stack_dtor(&stack););
+                STACK_ERROR_HANDLE_(stack_pop(&stack, &first_num),  stack_dtor(&stack););
+
+                const bool condition = first_num <= second_num;
+                jmp_condition_handle_(condition, processor);
+                break;
+            }
+            case OPCODE_JG:
+            {
+                lassert(stack_size(stack) >= 2, "");
+
+                operand_t first_num = 0, second_num = 0;
+                STACK_ERROR_HANDLE_(stack_pop(&stack, &second_num), stack_dtor(&stack););
+                STACK_ERROR_HANDLE_(stack_pop(&stack, &first_num),  stack_dtor(&stack););
+
+                const bool condition = first_num > second_num;
+                jmp_condition_handle_(condition, processor);
+                break;
+            }
+            case OPCODE_JGE:
+            {
+                lassert(stack_size(stack) >= 2, "");
+
+                operand_t first_num = 0, second_num = 0;
+                STACK_ERROR_HANDLE_(stack_pop(&stack, &second_num), stack_dtor(&stack););
+                STACK_ERROR_HANDLE_(stack_pop(&stack, &first_num),  stack_dtor(&stack););
+
+                const bool condition = first_num >= second_num;
+                jmp_condition_handle_(condition, processor);
+                break;
+            }
+            case OPCODE_JE:
+            {
+                lassert(stack_size(stack) >= 2, "");
+
+                operand_t first_num = 0, second_num = 0;
+                STACK_ERROR_HANDLE_(stack_pop(&stack, &second_num), stack_dtor(&stack););
+                STACK_ERROR_HANDLE_(stack_pop(&stack, &first_num),  stack_dtor(&stack););
+
+                const bool condition = first_num == second_num;
+                jmp_condition_handle_(condition, processor);
+                break;
+            }
+            case OPCODE_JNE:
+            {
+                lassert(stack_size(stack) >= 2, "");
+
+                operand_t first_num = 0, second_num = 0;
+                STACK_ERROR_HANDLE_(stack_pop(&stack, &second_num), stack_dtor(&stack););
+                STACK_ERROR_HANDLE_(stack_pop(&stack, &first_num),  stack_dtor(&stack););
+
+                const bool condition = first_num != second_num;
+                jmp_condition_handle_(condition, processor);
+                break;
+            }
+
+            //-----------------------------
+
             case OPCODE_HLT:
             {
 #ifndef NDEBUG
@@ -314,7 +406,7 @@ static void lassert_processor_init_(const processor_t* const processor)
     lassert(processor->regs, "");
 }
 
-static operand_t* GetOperandAddr_(cmnd_t cmnd, processor_t* const processor)
+static operand_t* get_operand_addr_(cmnd_t cmnd, processor_t* const processor)
 {
     lassert(processor, "");
     lassert(cmnd.imm | cmnd.mem | cmnd.reg, "");
@@ -328,6 +420,7 @@ static operand_t* GetOperandAddr_(cmnd_t cmnd, processor_t* const processor)
         processor->ip += sizeof(operand_t);
 
         operand_t reg_num = 0;
+        lassert(processor->instructs[processor->ip] < REGS_SIZE_, "Register overflow");
         memcpy(&reg_num, processor->regs + processor->instructs[processor->ip], sizeof(reg_num));
         processor->ip += sizeof(operand_t);
 
@@ -342,6 +435,7 @@ static operand_t* GetOperandAddr_(cmnd_t cmnd, processor_t* const processor)
     }
     else if (cmnd.reg)
     {
+        lassert(processor->instructs[processor->ip] < REGS_SIZE_, "Register overflow");
         operand_addr = processor->regs + processor->instructs[processor->ip];
         processor->ip += sizeof(operand_t);
     }
@@ -357,8 +451,25 @@ static operand_t* GetOperandAddr_(cmnd_t cmnd, processor_t* const processor)
 
         operand_t temp = 0;
         memcpy(&temp, operand_addr, sizeof(*operand_addr));
+        lassert((size_t)temp < MEMORY_SIZE_, "Memory overflow");
         operand_addr = processor->memory + temp;
     }
 
     return operand_addr;
+}
+
+static void jmp_condition_handle_(const bool condition, processor_t* const processor)
+{
+    lassert(processor, "");
+
+    if (condition)
+    {
+        memcpy(&processor->ip,  processor->instructs + processor->ip, sizeof(processor->ip));
+        lassert(processor->ip < processor->instructs_size, "Instructs overflow. Ip = 0x%lx", 
+                processor->ip);
+    }
+    else
+    {
+        processor->ip += sizeof(operand_t);
+    }
 }

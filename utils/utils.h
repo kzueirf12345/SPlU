@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdio.h>
 
 #include "concole.h"
 
@@ -17,6 +18,7 @@
 #define IF_ELSE_DEBUG(smth, other_smth) other_smth
 #endif /*NDEBUG*/
 
+#define MAX_OPCODE_BITS 5
 
 enum Opcode 
 {
@@ -32,12 +34,21 @@ enum Opcode
     OPCODE_OUT      = 7,
     OPCODE_IN       = 8,
 
-    OPCODE_HLT      = 9
+    OPCODE_JMP      = 9,
+    OPCODE_JL       = 10,
+    OPCODE_JLE      = 11,
+    OPCODE_JG       = 12,
+    OPCODE_JGE      = 13,
+    OPCODE_JE       = 14,
+    OPCODE_JNE      = 15,
+
+    OPCODE_HLT      = 16
 };
+static_assert(OPCODE_HLT < (1 << MAX_OPCODE_BITS));
 
 typedef struct Cmnd
 {
-    unsigned char opcode: 5; //REVIEW сучка
+    unsigned char opcode: MAX_OPCODE_BITS; //REVIEW сучка
     bool mem: 1;
     bool reg: 1;
     bool imm: 1;
