@@ -30,10 +30,10 @@ DEBUG_FLAGS = -D _DEBUG  -ggdb -Og -g3 -D_FORTIFY_SOURCES=3 $(SANITIZER)
 RELEASE_FLAGS = -DNDEBUG -O2
 FLAGS += $(if $(DEBUG_),$(DEBUG_FLAGS),$(RELEASE_FLAGS))
 
-DIRS = 
+DIRS = processing
 BUILD_DIRS = $(DIRS:%=$(BUILD_DIR)/%)
 
-SOURCES = main.c
+SOURCES = main.c processing/processing.c
 
 SOURCES_REL_PATH = $(SOURCES:%=$(SRC_DIR)/%)
 OBJECTS_REL_PATH = $(SOURCES:%.c=$(BUILD_DIR)/%.o)
@@ -50,7 +50,7 @@ build: $(PROJECT_NAME).out
 
 
 $(PROJECT_NAME).out: $(OBJECTS_REL_PATH)
-	@$(COMPILER) $(FLAGS) -o $@ $^ -L../libs/logger -llogger
+	@$(COMPILER) $(FLAGS) -o $@ $^ -L../libs/stack_on_array -lstack -L../libs/logger -llogger
 
 $(BUILD_DIR)/%.o : $(SRC_DIR)/%.c | $(BUILD_DIRS) logger_build
 	@$(COMPILER) $(FLAGS) -I../utils -I../libs -c -MMD -MP $< -o $@

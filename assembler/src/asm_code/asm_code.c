@@ -3,66 +3,66 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "input.h"
+#include "asm_code.h"
 #include "utils.h"
 #include "logger/liblogger.h"
 #include "../asm_code/asm_code.h"
 
 #define CASE_ENUM_TO_STRING_(error) case error: return #error
-const char* input_strerror(const enum InputError input_error)
+const char* asm_code_strerror(const enum AsmCodeError error)
 {
-    switch (input_error)
+    switch (error)
     {
-        CASE_ENUM_TO_STRING_(INPUT_ERROR_SUCCESS);
-        CASE_ENUM_TO_STRING_(INPUT_ERROR_FAILURE);
+        CASE_ENUM_TO_STRING_(ASM_CODE_ERROR_SUCCESS);
+        CASE_ENUM_TO_STRING_(ASM_CODE_ERROR_FAILURE);
     default:
-        return "UNKNOWN_INPUT_ERROR";
+        return "UNKNOWN_ASM_CODE_ERROR";
     }
-    return "UNKNOWN_INPUT_ERROR";
+    return "UNKNOWN_ASM_CODE_ERROR";
 }
 #undef CASE_ENUM_TO_STRING_
 
 
-static enum InputError fill_asm_code_string_count_and_split_ (asm_code_t* const asm_code);
-static enum InputError fill_asm_code_string_ptrs_            (asm_code_t* const asm_code);
-static enum InputError fill_asm_code_size_   (asm_code_t* const asm_code, FILE** const input_file);
-static enum InputError fill_asm_code_data_   (asm_code_t* const asm_code, FILE** const input_file);
-static enum InputError fill_asm_code_spaces_ (asm_code_t* const asm_code);
+static enum AsmCodeError fill_asm_code_string_count_and_split_ (asm_code_t* const asm_code);
+static enum AsmCodeError fill_asm_code_string_ptrs_            (asm_code_t* const asm_code);
+static enum AsmCodeError fill_asm_code_size_   (asm_code_t* const asm_code, FILE** const input_file);
+static enum AsmCodeError fill_asm_code_data_   (asm_code_t* const asm_code, FILE** const input_file);
+static enum AsmCodeError fill_asm_code_spaces_ (asm_code_t* const asm_code);
 
 
-enum InputError asm_code_ctor(const char* const input_filename, asm_code_t* const asm_code)
+enum AsmCodeError asm_code_ctor(const char* const input_filename, asm_code_t* const asm_code)
 {
     lassert(input_filename, "");
     lassert(asm_code, "");
 
-    enum InputError input_error_handler = INPUT_ERROR_SUCCESS;
+    enum AsmCodeError asm_code_error_handler = ASM_CODE_ERROR_SUCCESS;
 
     FILE* input_file = fopen(input_filename, "rb");
     if (!input_file)
     {
         perror("Can't fopen input file");
-        return INPUT_ERROR_FAILURE;
+        return ASM_CODE_ERROR_FAILURE;
     }
     setbuf(input_file, NULL);
 
-    input_error_handle(fill_asm_code_size_(asm_code, &input_file));
-    input_error_handle(fill_asm_code_data_(asm_code, &input_file));
+    ASM_CODE_ERROR_HANDLE(fill_asm_code_size_(asm_code, &input_file));
+    ASM_CODE_ERROR_HANDLE(fill_asm_code_data_(asm_code, &input_file));
 
     if (fclose(input_file))
     {
         perror("Can't fclose input file");
-        return INPUT_ERROR_FAILURE;
+        return ASM_CODE_ERROR_FAILURE;
     }
     IF_DEBUG(input_file = NULL;)
 
-    input_error_handle(fill_asm_code_string_count_and_split_(asm_code));
-    input_error_handle(fill_asm_code_string_ptrs_           (asm_code));
-    input_error_handle(fill_asm_code_spaces_                (asm_code));
+    ASM_CODE_ERROR_HANDLE(fill_asm_code_string_count_and_split_(asm_code));
+    ASM_CODE_ERROR_HANDLE(fill_asm_code_string_ptrs_           (asm_code));
+    ASM_CODE_ERROR_HANDLE(fill_asm_code_spaces_                (asm_code));
 
-    return input_error_handler;
+    return asm_code_error_handler;
 }
 
-static enum InputError fill_asm_code_size_(asm_code_t* const asm_code, FILE** const input_file) 
+static enum AsmCodeError fill_asm_code_size_(asm_code_t* const asm_code, FILE** const input_file) 
 {
     lassert(asm_code, "");
     lassert(input_file, "");
@@ -71,14 +71,14 @@ static enum InputError fill_asm_code_size_(asm_code_t* const asm_code, FILE** co
     if (fseek(*input_file, 0, SEEK_END))
     {
         perror("Can't fseek to end input file");
-        return INPUT_ERROR_FAILURE;
+        return ASM_CODE_ERROR_FAILURE;
     }
 
     long code_size = 0;
     if ((code_size = ftell(*input_file)) < 0)
     {
         perror("Can't ftell input_file");
-        return INPUT_ERROR_FAILURE;
+        return ASM_CODE_ERROR_FAILURE;
     }
     asm_code->code_size = (size_t)code_size + 1;
 
@@ -86,13 +86,13 @@ static enum InputError fill_asm_code_size_(asm_code_t* const asm_code, FILE** co
     if (fseek(*input_file, 0, SEEK_SET))
     {
         perror("Can't fseek to start input file");
-        return INPUT_ERROR_FAILURE;
+        return ASM_CODE_ERROR_FAILURE;
     }
 
-    return INPUT_ERROR_SUCCESS;
+    return ASM_CODE_ERROR_SUCCESS;
 }
 
-enum InputError fill_asm_code_data_(asm_code_t* const asm_code, FILE** const input_file)
+enum AsmCodeError fill_asm_code_data_(asm_code_t* const asm_code, FILE** const input_file)
 {
     lassert(input_file, "");
     lassert(*input_file, "");
@@ -103,21 +103,21 @@ enum InputError fill_asm_code_data_(asm_code_t* const asm_code, FILE** const inp
     if (!asm_code->code)
     {
         perror("Can't calloc memory for asm_code->code");
-        return INPUT_ERROR_FAILURE;
+        return ASM_CODE_ERROR_FAILURE;
     }
 
     if (fread(asm_code->code, 1, asm_code->code_size - 1, *input_file) != (asm_code->code_size - 1))
     {
         perror("Can't fread into input file");
-        return INPUT_ERROR_FAILURE;
+        return ASM_CODE_ERROR_FAILURE;
     }
 
     asm_code->code[asm_code->code_size - 1] = '\0';
 
-    return INPUT_ERROR_SUCCESS;
+    return ASM_CODE_ERROR_SUCCESS;
 }
 
-static enum InputError fill_asm_code_string_count_and_split_ (asm_code_t* const asm_code)
+static enum AsmCodeError fill_asm_code_string_count_and_split_ (asm_code_t* const asm_code)
 {
     lassert(asm_code, "");
     lassert(asm_code->code_size, "");
@@ -133,10 +133,10 @@ static enum InputError fill_asm_code_string_count_and_split_ (asm_code_t* const 
         }
     }
 
-    return INPUT_ERROR_SUCCESS;
+    return ASM_CODE_ERROR_SUCCESS;
 }
 
-static enum InputError fill_asm_code_string_ptrs_(asm_code_t* const asm_code)
+static enum AsmCodeError fill_asm_code_string_ptrs_(asm_code_t* const asm_code)
 {
     lassert(asm_code, "");
     lassert(asm_code->code_size, "");
@@ -147,7 +147,7 @@ static enum InputError fill_asm_code_string_ptrs_(asm_code_t* const asm_code)
     if (!asm_code->comnds)
     {
         perror("Can't calloc memory for comnds");
-        return INPUT_ERROR_FAILURE;
+        return ASM_CODE_ERROR_FAILURE;
     }
 
     *asm_code->comnds = asm_code->code;
@@ -167,10 +167,10 @@ static enum InputError fill_asm_code_string_ptrs_(asm_code_t* const asm_code)
         }
     }
 
-    return INPUT_ERROR_SUCCESS;
+    return ASM_CODE_ERROR_SUCCESS;
 }
 
-static enum InputError fill_asm_code_spaces_ (asm_code_t* const asm_code)
+static enum AsmCodeError fill_asm_code_spaces_ (asm_code_t* const asm_code)
 {
     lassert(asm_code, "");
     lassert(asm_code->code_size, "");
@@ -186,7 +186,7 @@ static enum InputError fill_asm_code_spaces_ (asm_code_t* const asm_code)
         }
     }
 
-    return INPUT_ERROR_SUCCESS;
+    return ASM_CODE_ERROR_SUCCESS;
 }
 
 

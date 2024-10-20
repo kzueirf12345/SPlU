@@ -1,9 +1,13 @@
 #include <stdbool.h>
 #include <string.h>
 #include <ctype.h>
+#include <assert.h>
 
 #include "assembly.h"
-#include "stack_on_array/libstack.h"
+#include "../asm_code/asm_code.h"
+#include "logger/liblogger.h"
+#include "../instructions/instructions.h"
+#include "utils.h"
 
 #define CASE_ENUM_TO_STRING_(error) case error: return #error
 const char* asm_strerror(const enum AsmError input_error)
@@ -15,6 +19,7 @@ const char* asm_strerror(const enum AsmError input_error)
         CASE_ENUM_TO_STRING_(ASM_ERROR_DIV_BY_ZERO);
         CASE_ENUM_TO_STRING_(ASM_ERROR_STANDARD_ERRNO);
         CASE_ENUM_TO_STRING_(ASM_ERROR_INCORRECT_CMND);
+        CASE_ENUM_TO_STRING_(ASM_ERROR_INCORRECT_ARG);
         CASE_ENUM_TO_STRING_(ASM_ERROR_UNKNOWN);
     default:
         return "UNKNOWN_ASM_ERROR";
@@ -23,147 +28,82 @@ const char* asm_strerror(const enum AsmError input_error)
 }
 #undef CASE_ENUM_TO_STRING_
 
-enum ComndCode 
+static enum Opcode comnd_str_to_enum_(const char* const comnd_str);
+
+static enum AsmError add_instruct_with_operand_(enum Opcode opcode, const char* operand_str,
+                                         instructs_t* const instructs);
+
+enum AsmError assembly(const asm_code_t asm_code, instructs_t* const instructs)
 {
-    COMND_CODE_UNKNOWN  = 0,
-    COMND_CODE_PUSH     = 1,
+    lassert(instructs, "");
 
-    COMND_CODE_ADD      = 10,
-    COMND_CODE_SUB      = 11,
-    COMND_CODE_MUL      = 12,
-    COMND_CODE_DIV      = 13,
-
-    COMND_CODE_IN       = 20,
-    COMND_CODE_OUT      = 21,
-
-    COMND_CODE_HLT      = 100
-};
-
-static enum ComndCode comnd_str_to_enum_(const char* const comnd_str);
-
-#define stack_error_handle_(call_func, ...)                                                         \
-    do {                                                                                            \
-        stack_error_handler = call_func;                                                            \
-        if (stack_error_handler)                                                                    \
-        {                                                                                           \
-            fprintf(stderr, "Can't " #call_func". Stack error: %s\n",                               \
-                            stack_strerror(stack_error_handler));                                   \
-            __VA_ARGS__                                                                             \
-            return ASM_ERROR_STACK;                                                                 \
-        }                                                                                           \
-    } while(0)
-
-enum AsmError assembly(const asm_code_t asm_code)
-{
-    enum StackError stack_error_handler = STACK_ERROR_SUCCESS;
-
-    stack_key_t stack;
-    stack_error_handle_(STACK_CTOR(&stack, sizeof(instruction_t), 10), 
-                        stack_dtor(&stack););
+    enum AsmError asm_error_handler = ASM_ERROR_SUCCESS;
 
     bool is_hlt = false;
-    size_t IP = 0;
-    size_t CP = 0;
+    size_t ip = 0;
 
-    while(!is_hlt)
+    while(!is_hlt && ip < asm_code.comnds_size)
     {
-        lassert(IP < asm_code.comnds_size * 10, "Check infinity cycle");
-
-        const char* const comnd = asm_code.comnds[CP];
-        enum ComndCode comnd_code = comnd_str_to_enum_(comnd);
+        const char* const comnd = asm_code.comnds[ip];
+        enum Opcode comnd_code = comnd_str_to_enum_(comnd);
 
         switch(comnd_code)
         {
-            case COMND_CODE_PUSH:
+            case OPCODE_PUSH:
             {
-                instruction_t push_num = atoll(strchr(comnd, '\0') + 1);
-                stack_error_handle_(stack_push(&stack, &push_num), stack_dtor(&stack););
+                const char* operand_str = strchr(comnd, '\0') + 1;
+                ASM_ERROR_HANDLE(add_instruct_with_operand_(OPCODE_PUSH, operand_str, instructs));
                 break;
             }
 
-            case COMND_CODE_ADD:
+            case OPCODE_ADD:
             {
-                lassert(stack_size(stack) >= 2, "");
-
-                instruction_t first_num = 0, second_num = 0;
-                stack_error_handle_(stack_pop(&stack, &second_num), stack_dtor(&stack););
-                stack_error_handle_(stack_pop(&stack, &first_num),  stack_dtor(&stack););
-
-                const instruction_t sum = first_num + second_num;
-                stack_error_handle_(stack_push(&stack, &sum), stack_dtor(&stack););
+                cmnd_t cmnd = {.imm = 0, .reg = 0, .mem = 0, .opcode = OPCODE_ADD };
+                instructs_push(instructs, &cmnd, 1);
                 break;
             }
-            case COMND_CODE_SUB:
+            case OPCODE_SUB:
             {
-                lassert(stack_size(stack) >= 2, "");
-
-                instruction_t first_num = 0, second_num = 0;
-                stack_error_handle_(stack_pop(&stack, &second_num), stack_dtor(&stack););
-                stack_error_handle_(stack_pop(&stack, &first_num),  stack_dtor(&stack););
-
-                const instruction_t sub = first_num - second_num;
-                stack_error_handle_(stack_push(&stack, &sub), stack_dtor(&stack););
+                cmnd_t cmnd = {.imm = 0, .reg = 0, .mem = 0, .opcode = OPCODE_SUB };
+                instructs_push(instructs, &cmnd, 1);
                 break;
             }
-            case COMND_CODE_MUL:
+            case OPCODE_MUL:
             {
-                lassert(stack_size(stack) >= 2, "");
-
-                instruction_t first_num = 0, second_num = 0;
-                stack_error_handle_(stack_pop(&stack, &second_num), stack_dtor(&stack););
-                stack_error_handle_(stack_pop(&stack, &first_num),  stack_dtor(&stack););
-
-                const instruction_t mul = first_num * second_num;
-                stack_error_handle_(stack_push(&stack, &mul), stack_dtor(&stack););
+                cmnd_t cmnd = {.imm = 0, .reg = 0, .mem = 0, .opcode = OPCODE_MUL };
+                instructs_push(instructs, &cmnd, 1);
                 break;
             }
-            case COMND_CODE_DIV:
+            case OPCODE_DIV:
             {
-                lassert(stack_size(stack) >= 2, "");
-
-                instruction_t first_num = 0, second_num = 0;
-                stack_error_handle_(stack_pop(&stack, &second_num), stack_dtor(&stack););
-                stack_error_handle_(stack_pop(&stack, &first_num),  stack_dtor(&stack););
-
-                if (second_num == 0)
-                {
-                    fprintf(stderr, "Can't div by zero\n");
-                    stack_dtor(&stack);
-                    return ASM_ERROR_DIV_BY_ZERO;
-                }
-                const instruction_t sum = first_num / second_num;
-                stack_error_handle_(stack_push(&stack, &sum), stack_dtor(&stack););
+                cmnd_t cmnd = {.imm = 0, .reg = 0, .mem = 0, .opcode = OPCODE_DIV };
+                instructs_push(instructs, &cmnd, 1);
                 break;
             }
 
-            case COMND_CODE_IN:
+            case OPCODE_OUT:
             {
-                
-                break;
-            }
-            case COMND_CODE_OUT:
-            {
-                lassert(stack_size(stack) >= 1, "");
-
-                instruction_t out_num = 0;
-                stack_error_handle_(stack_pop(&stack, &out_num), stack_dtor(&stack););
-
-                if (printf("out: %ld\n", out_num) <= 0)
-                {
-                    perror("Can't printf out");
-                    return ASM_ERROR_STANDARD_ERRNO;
-                }
-
+                cmnd_t cmnd = {.imm = 0, .reg = 0, .mem = 0, .opcode = OPCODE_OUT };
+                instructs_push(instructs, &cmnd, 1);
                 break;
             }
 
-            case COMND_CODE_HLT:
+            case OPCODE_IN:
             {
+                cmnd_t cmnd = {.imm = 0, .reg = 0, .mem = 0, .opcode = OPCODE_IN };
+                instructs_push(instructs, &cmnd, 1);
+                break;
+            }
+
+            case OPCODE_HLT:
+            {
+                cmnd_t cmnd = {.imm = 0, .reg = 0, .mem = 0, .opcode = OPCODE_HLT };
+                instructs_push(instructs, &cmnd, 1);
                 is_hlt = true;
                 break;
             }
 
-            case COMND_CODE_UNKNOWN:
+            case OPCODE_UNKNOWN:
             {
                 fprintf(stderr, "Incorrect command\n");
                 return ASM_ERROR_INCORRECT_CMND;
@@ -175,38 +115,96 @@ enum AsmError assembly(const asm_code_t asm_code)
                 return ASM_ERROR_UNKNOWN;
             }
         }
-        ++CP;
+        ++ip;
     }
 
-    stack_dtor(&stack);
-    return ASM_ERROR_SUCCESS;
+    return asm_error_handler;
 }
 #undef stack_error_handle_
 
 
-static enum ComndCode comnd_str_to_enum_(const char* const comnd_str)
+static enum Opcode comnd_str_to_enum_(const char* const comnd_str)
 {
     lassert(comnd_str, "");
 
     if (strcmp(comnd_str, "PUSH") == 0)
-        return COMND_CODE_PUSH;
+        return OPCODE_PUSH;
 
     if (strcmp(comnd_str, "ADD")  == 0)
-        return COMND_CODE_ADD;
+        return OPCODE_ADD;
     if (strcmp(comnd_str, "SUB")  == 0)
-        return COMND_CODE_SUB;
+        return OPCODE_SUB;
     if (strcmp(comnd_str, "MUL")  == 0)
-        return COMND_CODE_MUL;
+        return OPCODE_MUL;
     if (strcmp(comnd_str, "DIV")  == 0)
-        return COMND_CODE_DIV;
+        return OPCODE_DIV;
 
-    if (strcmp(comnd_str, "IN")   == 0)
-        return COMND_CODE_IN;
     if (strcmp(comnd_str, "OUT")  == 0)
-        return COMND_CODE_OUT;
+        return OPCODE_OUT;
 
     if (strcmp(comnd_str, "HLT")  == 0)
-        return COMND_CODE_HLT;
+        return OPCODE_HLT;
     
-    return COMND_CODE_UNKNOWN;
+    return OPCODE_UNKNOWN;
+}
+
+static enum AsmError add_instruct_with_operand_(enum Opcode opcode, const char* operand_str,
+                                         instructs_t* const instructs)
+{
+    cmnd_t cmnd = {};
+    cmnd.opcode = opcode;
+
+    if (operand_str[0] == '[')
+    {
+        cmnd.mem = true;
+        ++operand_str;
+    }
+    if (isdigit(operand_str[0])) 
+    {
+        cmnd.imm = true;
+        if (strchr(operand_str, '+'))
+        {
+            cmnd.reg = true;
+        }
+    }
+    else if (isalpha(operand_str[0])) cmnd.reg = true;
+
+    instructs_push(instructs, &cmnd, 1);
+
+    operand_t imm_num = 0;
+    operand_t reg_num = 0;
+
+    //TODO check valid reg and mem addr
+
+    if (cmnd.imm & cmnd.reg)
+    {
+        if (sscanf(operand_str, INOUT_OPERAND_CODE "+R" INOUT_OPERAND_CODE, 
+                                &imm_num, &reg_num) != 2)
+        {
+            perror("Can't sscanf imm_num and reg_str");
+            return ASM_ERROR_INCORRECT_ARG;
+        }
+
+        instructs_push(instructs, &imm_num, sizeof(operand_t));
+        instructs_push(instructs, &reg_num, sizeof(operand_t));
+    }
+    else if (cmnd.imm)
+    {
+        if (sscanf(operand_str, INOUT_OPERAND_CODE, &imm_num) != 1)
+        {
+            perror("Can't sscanf imm_num");
+            return ASM_ERROR_INCORRECT_ARG;
+        }
+        instructs_push(instructs, &imm_num, sizeof(operand_t));
+    }
+    else if (cmnd.reg)
+    {
+        if (sscanf(operand_str, "R" INOUT_OPERAND_CODE, &reg_num) != 1)
+        {
+            perror("Can't sscanf reg_str");
+            return ASM_ERROR_INCORRECT_ARG;
+        }
+        instructs_push(instructs, &reg_num, sizeof(operand_t));
+    }
+    return ASM_ERROR_SUCCESS;
 }
