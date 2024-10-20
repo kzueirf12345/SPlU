@@ -16,9 +16,9 @@ const char* asm_code_strerror(const enum AsmCodeError error)
         CASE_ENUM_TO_STRING_(ASM_CODE_ERROR_SUCCESS);
         CASE_ENUM_TO_STRING_(ASM_CODE_ERROR_FAILURE);
     default:
-        return "UNKNOWN_ASM_ERROR";
+        return "UNKNOWN_ASM_CODE_ERROR";
     }
-    return "UNKNOWN_ASM_ERROR";
+    return "UNKNOWN_ASM_CODE_ERROR";
 }
 #undef CASE_ENUM_TO_STRING_
 

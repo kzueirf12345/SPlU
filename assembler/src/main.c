@@ -24,7 +24,7 @@ int main()
         return EXIT_FAILURE;
     }
     
-    printf("Hello assembly!\n");
+    printf(GREEN_TEXT("\nHello assembly!\n"));
 
 // ----------------------
 
@@ -34,7 +34,7 @@ int main()
 
     instructs_t instructs = {};
     INSTRUCTS_ERROR_HANDLE(instructs_ctor(&instructs, asm_code.comnds_size * 3 * sizeof(operand_t)),
-                           logger_dtor(); instructs_dtor(&instructs););
+                           logger_dtor(); instructs_dtor(&instructs);); //TODO count size
 
     ASM_ERROR_HANDLE(assembly(asm_code, &instructs),
                      logger_dtor(); asm_code_dtor(&asm_code); instructs_dtor(&instructs););

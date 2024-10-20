@@ -4,8 +4,6 @@
 #include <stdio.h>
 #include <assert.h>
 
-#include "../asm_code/asm_code.h"
-
 
 enum AsmCodeError
 {

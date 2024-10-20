@@ -174,6 +174,8 @@ static enum AsmError add_instruct_with_operand_(enum Opcode opcode, const char* 
     operand_t imm_num = 0;
     operand_t reg_num = 0;
 
+    //TODO check valid reg and mem addr
+
     if (cmnd.imm & cmnd.reg)
     {
         if (sscanf(operand_str, INOUT_OPERAND_CODE "+R" INOUT_OPERAND_CODE, 

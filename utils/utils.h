@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "concole.h"
+
 #define MAX(a, b) (((a) > (b)) ? (a) : (b))
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
 
@@ -20,22 +22,22 @@ enum Opcode
 {
     OPCODE_UNKNOWN  = 0,
     OPCODE_PUSH     = 1,
-    //TODO POP
+    // OPCODE_POP      = 2,
 
-    OPCODE_ADD      = 2,
-    OPCODE_SUB      = 3,
-    OPCODE_MUL      = 4,
-    OPCODE_DIV      = 5,
+    OPCODE_ADD      = 3,
+    OPCODE_SUB      = 4,
+    OPCODE_MUL      = 5,
+    OPCODE_DIV      = 6,
 
-    OPCODE_OUT      = 6,
-    OPCODE_IN       = 7,
+    OPCODE_OUT      = 7,
+    OPCODE_IN       = 8,
 
-    OPCODE_HLT      = 8
+    OPCODE_HLT      = 9
 };
 
 typedef struct Cmnd
 {
-    enum Opcode opcode: 5;
+    unsigned char opcode: 5; //REVIEW сучка
     bool mem: 1;
     bool reg: 1;
     bool imm: 1;
@@ -43,6 +45,9 @@ typedef struct Cmnd
 
 typedef int64_t operand_t;
 #define INOUT_OPERAND_CODE "%ld"
+
+static const size_t REGS_SIZE_   = 9;
+static const size_t MEMORY_SIZE_ = 2048;
 
 /*!SECTION
 PUSH 30
