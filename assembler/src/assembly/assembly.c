@@ -44,15 +44,23 @@ enum AsmError assembly(const asm_code_t asm_code, instructs_t* const instructs)
 
     while(!is_hlt && ip < asm_code.comnds_size)
     {
-        const char* const comnd = asm_code.comnds[ip];
-        enum Opcode comnd_code = comnd_str_to_enum_(comnd);
+        const char* const comnd_str = asm_code.comnds[ip];
+        enum Opcode comnd_code = comnd_str_to_enum_(comnd_str);
 
         switch(comnd_code)
         {
             case OPCODE_PUSH:
             {
-                const char* operand_str = strchr(comnd, '\0') + 1;
+                const char* operand_str = strchr(comnd_str, '\0') + 1;
                 ASM_ERROR_HANDLE(add_instruct_with_operand_(OPCODE_PUSH, operand_str, instructs));
+                break;
+            }
+
+            case OPCODE_POP:
+            {
+                // fprintf(stderr, "lol\n");
+                const char* operand_str = strchr(comnd_str, '\0') + 1;
+                ASM_ERROR_HANDLE(add_instruct_with_operand_(OPCODE_POP, operand_str, instructs));
                 break;
             }
 
@@ -129,6 +137,8 @@ static enum Opcode comnd_str_to_enum_(const char* const comnd_str)
 
     if (strcmp(comnd_str, "PUSH") == 0)
         return OPCODE_PUSH;
+    if (strcmp(comnd_str, "POP") == 0)
+        return OPCODE_POP;
 
     if (strcmp(comnd_str, "ADD")  == 0)
         return OPCODE_ADD;
@@ -149,7 +159,7 @@ static enum Opcode comnd_str_to_enum_(const char* const comnd_str)
 }
 
 static enum AsmError add_instruct_with_operand_(enum Opcode opcode, const char* operand_str,
-                                         instructs_t* const instructs)
+                                                instructs_t* const instructs)
 {
     cmnd_t cmnd = {};
     cmnd.opcode = opcode;
@@ -162,12 +172,27 @@ static enum AsmError add_instruct_with_operand_(enum Opcode opcode, const char* 
     if (isdigit(operand_str[0])) 
     {
         cmnd.imm = true;
+
+        if (!cmnd.mem && cmnd.opcode == OPCODE_POP)
+        {
+            fprintf(stderr, "Incorrect pop argument\n");
+            return ASM_ERROR_INCORRECT_ARG;
+        }
+
         if (strchr(operand_str, '+'))
         {
             cmnd.reg = true;
         }
     }
-    else if (isalpha(operand_str[0])) cmnd.reg = true;
+    else if (isalpha(operand_str[0]) && !strchr(operand_str, '+')) 
+    {
+        cmnd.reg = true;
+    }
+    else
+    {
+        fprintf(stderr, "Can't parse argument\n");
+        return ASM_ERROR_INCORRECT_ARG;
+    }
 
     instructs_push(instructs, &cmnd, 1);
 
@@ -206,5 +231,11 @@ static enum AsmError add_instruct_with_operand_(enum Opcode opcode, const char* 
         }
         instructs_push(instructs, &reg_num, sizeof(operand_t));
     }
+    else
+    {
+        fprintf(stderr, "Can't handle argument flag\n");
+        return ASM_ERROR_INCORRECT_ARG;
+    }
+
     return ASM_ERROR_SUCCESS;
 }

@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <stdbool.h>
+#include <unistd.h>
 
 #include "processing.h"
 #include "logger/liblogger.h"
@@ -183,6 +184,17 @@ enum ProcessorError processing(processor_t* const processor)
                                     stack_dtor(&stack););
                 break;
             }
+            case OPCODE_POP:
+            {
+                lassert(stack_size(stack) >= 1, "");
+                // fprintf(stderr, "into pop\n");
+
+                operand_t pop_elem = 0;
+                STACK_ERROR_HANDLE_(stack_pop(&stack, &pop_elem), stack_dtor(&stack););
+
+                memcpy(GetOperandAddr_(cmnd, processor), &pop_elem, sizeof(pop_elem));
+                break;
+            }
             case OPCODE_ADD:
             {
                 lassert(stack_size(stack) >= 2, "");
@@ -311,9 +323,12 @@ static operand_t* GetOperandAddr_(cmnd_t cmnd, processor_t* const processor)
 
     if (cmnd.imm & cmnd.reg)
     {
-        const operand_t imm_num = *(operand_t*)(processor->instructs + processor->ip);
+        operand_t imm_num = 0;
+        memcpy(&imm_num, processor->instructs + processor->ip, sizeof(imm_num));
         processor->ip += sizeof(operand_t);
-        const operand_t reg_num = processor->regs[*(operand_t*)(processor->instructs + processor->ip)];
+
+        operand_t reg_num = 0;
+        memcpy(&reg_num, processor->regs + processor->instructs[processor->ip], sizeof(reg_num));
         processor->ip += sizeof(operand_t);
 
         static operand_t save_num_ = 0;
@@ -327,13 +342,22 @@ static operand_t* GetOperandAddr_(cmnd_t cmnd, processor_t* const processor)
     }
     else if (cmnd.reg)
     {
-        operand_addr = &processor->regs[*(operand_t*)(processor->instructs + processor->ip)];
+        operand_addr = processor->regs + processor->instructs[processor->ip];
         processor->ip += sizeof(operand_t);
     }
 
     if (cmnd.mem)
     {
-        operand_addr = &processor->memory[*operand_addr];
+        const __useconds_t SLEEP_TIME_ = 500000;
+        if (usleep(SLEEP_TIME_) != 0)
+        {
+            fprintf(stderr, "Can't sleep :)\n");
+            return NULL;
+        }
+
+        operand_t temp = 0;
+        memcpy(&temp, operand_addr, sizeof(*operand_addr));
+        operand_addr = processor->memory + temp;
     }
 
     return operand_addr;
