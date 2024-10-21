@@ -77,10 +77,9 @@ enum AsmError assembly(const asm_code_t asm_code, instructs_t* const instructs)
     fixup_t fixup = {};
     FIXUP_ERROR_HANDLE_(fixup_ctor(&fixup, LABELS_SIZE), labels_dtor(&labels););
 
-    bool is_hlt = false;
     size_t ip = 0;
 
-    while(!is_hlt && ip < asm_code.comnds_size)
+    while(ip < asm_code.comnds_size)
     {
         char* const cmnd_str = asm_code.comnds[ip];
         enum Opcode comnd_code = comnd_str_to_enum_(cmnd_str);
@@ -227,7 +226,6 @@ enum AsmError assembly(const asm_code_t asm_code, instructs_t* const instructs)
             {
                 cmnd_t cmnd = {.imm = 0, .reg = 0, .mem = 0, .opcode = OPCODE_HLT };
                 instructs_push_back(instructs, &cmnd, 1);
-                is_hlt = true;
                 break;
             }
 

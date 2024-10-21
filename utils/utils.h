@@ -66,3 +66,33 @@ static const size_t REGS_SIZE_    = 9;
 static const size_t MEMORY_SIZE_ = 2048;
 
 #endif /*SPLU_UTILS_H*/
+
+/*!SECTION
+# INIT
+PUSH 1
+POP R1
+
+# cycle begin
+:METKA
+PUSH R1
+PUSH R1
+MUL
+
+OUT
+# increment
+PUSH R1
+PUSH 1
+ADD
+POP R1
+
+# condition
+PUSH R1
+PUSH 10
+JL :METKA
+
+JMP :METKA21234
+
+:METKA21234
+
+HLT
+*/

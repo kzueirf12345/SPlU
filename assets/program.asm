@@ -1,27 +1,32 @@
-# INIT
+# R2 - число
+# R1 - результат
+
+# MAIN
+PUSH 6
+POP R2
 PUSH 1
 POP R1
 
-# cycle begin
-:METKA
+JMP :factorial
+:exit_factorial
 PUSH R1
-PUSH R1
-MUL
-
 OUT
-# increment
-PUSH R1
+HLT
+
+
+
+:factorial
+PUSH R2
 PUSH 1
-ADD
+JE :exit_factorial
+
+PUSH R1
+PUSH R2
+MUL
 POP R1
 
-# condition
-PUSH R1
-PUSH 10
-JL :METKA
-
-JMP :METKA21234
-
-:METKA21234
-
-HLT
+PUSH R2
+PUSH 1
+SUB
+POP R2
+JMP :factorial
