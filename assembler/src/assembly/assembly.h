@@ -16,7 +16,8 @@ enum AsmError
     ASM_ERROR_INCORRECT_CMND    = 4,
     ASM_ERROR_INCORRECT_ARG     = 5,
     ASM_ERROR_LABELS            = 6,
-    ASM_ERROR_UNKNOWN           = 7
+    ASM_ERROR_FIXUP             = 7,
+    ASM_ERROR_UNKNOWN           = 8
 };
 static_assert(ASM_ERROR_SUCCESS == 0);
 

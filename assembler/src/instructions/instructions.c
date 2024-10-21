@@ -46,7 +46,8 @@ void instructs_dtor(instructs_t* const instructs)
     IF_DEBUG(instructs->size = 0);
 }
 
-void instructs_push(instructs_t* const instructs, const void* const elem, const size_t elem_size)
+void instructs_push_back(instructs_t* const instructs, const void* const elem, 
+                         const size_t elem_size)
 {
     lassert(instructs, "");
     lassert(elem, "");

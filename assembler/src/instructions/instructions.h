@@ -37,8 +37,8 @@ typedef struct Instructs
 enum InstructsError instructs_ctor(instructs_t* const instructs, const size_t size);
 void                instructs_dtor(instructs_t* const instructs);
 
-void instructs_push(instructs_t* const instructs, const void* const elem, 
-                                   const size_t elem_size);
+void instructs_push_back(instructs_t* const instructs, const void* const elem, 
+                         const size_t elem_size);
 
 enum InstructsError instructs_output(const char* const output_filename, instructs_t instructs);
 

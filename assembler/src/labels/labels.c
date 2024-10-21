@@ -68,54 +68,51 @@ void labels_dtor(labels_t* const labels)
 }
 
 
-void labels_push(labels_t* const labels, const char* const name, const size_t name_size,
-                 const size_t addr)
+void labels_push(labels_t* const labels, label_t label)
 {
     lassert(labels, "");
     lassert(labels->labels, "");
-    lassert(name, "");
-    lassert(name_size, "");
-    lassert(name_size < labels->labels->name_size, "");
+    lassert(label.name, "");
+    lassert(label.name_size, "");
+    lassert(label.name_size < labels->labels->name_size, "");
     lassert(labels->count < labels->size, "");
 
-    strncpy(labels->labels[labels->count].name, name, name_size);
-    labels->labels[labels->count].addr = addr;
+    strncpy(labels->labels[labels->count].name, label.name, label.name_size);
+    labels->labels[labels->count].addr = label.addr;
     ++labels->count;
 }
 
-label_t* labels_find(labels_t* const labels, const char* const name)
+label_t* labels_find(const labels_t labels, const char* const name)
 {
-    lassert(labels, "");
-    lassert(labels->labels, "");
+    lassert(labels.labels, "");
     lassert(name, "");
-    lassert(labels->count < labels->size, "");
+    lassert(labels.count < labels.size, "");
 
-    for (size_t ind = 0; ind < labels->count; ++ind)
+    for (size_t ind = 0; ind < labels.count; ++ind)
     {
-        lassert(labels->labels[ind].name, "");
+        lassert(labels.labels[ind].name, "");
 
-        if (strcmp(name, labels->labels[ind].name) == 0)
+        if (strcmp(name, labels.labels[ind].name) == 0)
         {
-            return labels->labels + ind;
+            return labels.labels + ind;
         }
     }
 
     return NULL;
 }
 
-bool labels_push_unfinded(labels_t* const labels, const char* const name, const size_t name_size,
-                          const size_t addr)
+bool labels_push_unfinded(labels_t* const labels, label_t label)
 {
     lassert(labels, "");
     lassert(labels->labels, "");
-    lassert(name, "");
-    lassert(name_size, "");
-    lassert(name_size < labels->labels->name_size, "");
+    lassert(label.name, "");
+    lassert(label.name_size, "");
+    lassert(label.name_size < labels->labels->name_size, "");
     lassert(labels->count < labels->size, "");
 
-    if (!labels_find(labels, name))
+    if (!labels_find(*labels, label.name))
     {
-        labels_push(labels, name, name_size, addr);
+        labels_push(labels, label);
         return true;
     }
 

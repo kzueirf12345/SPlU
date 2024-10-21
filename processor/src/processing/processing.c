@@ -290,12 +290,6 @@ enum ProcessorError processing(processor_t* const processor)
 
             case OPCODE_JMP:
             {
-                lassert(stack_size(stack) >= 2, "");
-
-                operand_t first_num = 0, second_num = 0;
-                STACK_ERROR_HANDLE_(stack_pop(&stack, &second_num), stack_dtor(&stack););
-                STACK_ERROR_HANDLE_(stack_pop(&stack, &first_num),  stack_dtor(&stack););
-
                 jmp_condition_handle_(true, processor);
                 break;
             }

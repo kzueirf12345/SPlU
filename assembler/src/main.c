@@ -6,6 +6,7 @@
 #include "asm_code/asm_code.h"
 #include "assembly/assembly.h"
 #include "utils.h"
+#include "stack_on_array/libstack.h"
 
 int main()
 {

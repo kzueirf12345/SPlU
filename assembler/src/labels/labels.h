@@ -42,16 +42,16 @@ typedef struct Labels
     size_t count;
 } labels_t;
 
-enum LabelsError labels_ctor(labels_t* const labels, const size_t labels_size, 
+enum LabelsError labels_ctor(labels_t* const labels, const size_t count_label_names, 
                              const size_t label_name_size);
 void labels_dtor(labels_t* const labels);
 
-void labels_push(labels_t* const labels, const char* const name, const size_t name_size,
-                 const size_t addr);
+void labels_push(labels_t* const labels, label_t label);
 
-label_t* labels_find(labels_t* const labels, const char* const name);
+label_t* labels_find(const labels_t labels, const char* const name);
 
-bool labels_push_unfinded(labels_t* const labels, const char* const name, const size_t name_size,
-                          const size_t addr);
+bool labels_push_unfinded(labels_t* const labels, label_t label);
+
+
 
 #endif /*ASSEMBLER_SRC_LABELS_H*/
