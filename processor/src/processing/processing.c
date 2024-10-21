@@ -173,6 +173,12 @@ enum ProcessorError processing(processor_t* const processor)
 
         switch ((enum Opcode)cmnd.opcode)
         {
+            case OPCODE_ZERO:
+            {
+                fprintf(stderr, "ZERO INSTRUCT\n");
+                stack_dtor(&stack);
+                return PROCESSOR_ERROR_UNKNOWN_INSTRUCT;
+            }
             case OPCODE_PUSH:
             {
                 STACK_ERROR_HANDLE_(stack_push(&stack, get_operand_addr_(cmnd, processor)),
@@ -364,6 +370,13 @@ enum ProcessorError processing(processor_t* const processor)
                 const bool condition = first_num != second_num;
                 jmp_condition_handle_(condition, processor);
                 break;
+            }
+
+            case OPCODE_LABEL:
+            {
+                fprintf(stderr, "LABEL INSTRUCT. It's not valid in processor\n");
+                stack_dtor(&stack);
+                return PROCESSOR_ERROR_UNKNOWN_INSTRUCT;
             }
 
             //-----------------------------

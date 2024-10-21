@@ -8,6 +8,7 @@
 #include "logger/liblogger.h"
 #include "../instructions/instructions.h"
 #include "utils.h"
+#include "../labels/labels.h"
 
 #define CASE_ENUM_TO_STRING_(error) case error: return #error
 const char* asm_strerror(const enum AsmError input_error)
@@ -20,6 +21,7 @@ const char* asm_strerror(const enum AsmError input_error)
         CASE_ENUM_TO_STRING_(ASM_ERROR_STANDARD_ERRNO);
         CASE_ENUM_TO_STRING_(ASM_ERROR_INCORRECT_CMND);
         CASE_ENUM_TO_STRING_(ASM_ERROR_INCORRECT_ARG);
+        CASE_ENUM_TO_STRING_(ASM_ERROR_LABELS);
         CASE_ENUM_TO_STRING_(ASM_ERROR_UNKNOWN);
     default:
         return "UNKNOWN_ASM_ERROR";
@@ -28,39 +30,66 @@ const char* asm_strerror(const enum AsmError input_error)
 }
 #undef CASE_ENUM_TO_STRING_
 
-static enum Opcode comnd_str_to_enum_(const char* const comnd_str);
+
+static enum Opcode comnd_str_to_enum_(const char* const cmnd_str);
 
 static enum AsmError push_instruct_with_operand_(enum Opcode opcode, const char* operand_str,
-                                         instructs_t* const instructs);
+                                                 instructs_t* const instructs);
+
+static enum AsmError push_jmp_(enum Opcode opcode, const char* operand_str,
+                               instructs_t* const instructs, labels_t* const labels);
+
+#define ASM_ERROR_HANDLE_(call_func, ...)                                                           \
+        ASM_ERROR_HANDLE(call_func, fprintf(stderr, "Line: %zu\n", ip + 1); __VA_ARGS__)
 
 enum AsmError assembly(const asm_code_t asm_code, instructs_t* const instructs)
 {
     lassert(instructs, "");
 
     enum AsmError asm_error_handler = ASM_ERROR_SUCCESS;
+    enum LabelsError labels_error_handler = LABELS_ERROR_SUCCESS;
+
+    labels_t labels = {};
+    const size_t LABELS_SIZE     = 2048;
+    const size_t LABEL_NAME_SIZE = 256;
+
+    if (labels_ctor(&labels, LABELS_SIZE, LABEL_NAME_SIZE))
+    {
+        fprintf(stderr, "Can't labels_ctor. Labels error: %s", 
+                labels_strerror(labels_error_handler));
+        return ASM_ERROR_LABELS;
+    }
 
     bool is_hlt = false;
     size_t ip = 0;
 
     while(!is_hlt && ip < asm_code.comnds_size)
     {
-        const char* const comnd_str = asm_code.comnds[ip];
-        enum Opcode comnd_code = comnd_str_to_enum_(comnd_str);
+        const char* const cmnd_str = asm_code.comnds[ip];
+        enum Opcode comnd_code = comnd_str_to_enum_(cmnd_str);
 
         switch(comnd_code)
         {
+            case OPCODE_ZERO:
+            {
+                // прям как мой телефон - nothing
+                break;
+            }
+
             case OPCODE_PUSH:
             {
-                const char* operand_str = strchr(comnd_str, '\0') + 1;
-                ASM_ERROR_HANDLE(push_instruct_with_operand_(OPCODE_PUSH, operand_str, instructs));
+                const char* operand_str = strchr(cmnd_str, '\0') + 1;
+                ASM_ERROR_HANDLE_(push_instruct_with_operand_(OPCODE_PUSH, operand_str, instructs),
+                                 labels_dtor(&labels););
                 break;
             }
 
             case OPCODE_POP:
             {
                 // fprintf(stderr, "lol\n");
-                const char* operand_str = strchr(comnd_str, '\0') + 1;
-                ASM_ERROR_HANDLE(push_instruct_with_operand_(OPCODE_POP, operand_str, instructs));
+                const char* operand_str = strchr(cmnd_str, '\0') + 1;
+                ASM_ERROR_HANDLE_(push_instruct_with_operand_(OPCODE_POP, operand_str, instructs),
+                                 labels_dtor(&labels););
                 break;
             }
 
@@ -111,44 +140,65 @@ enum AsmError assembly(const asm_code_t asm_code, instructs_t* const instructs)
 
             case OPCODE_JMP:
             {
-                const char* operand_str = strchr(comnd_str, '\0') + 1;
-                ASM_ERROR_HANDLE(push_instruct_with_operand_(OPCODE_JMP, operand_str, instructs));
+
+                const char* operand_str = strchr(cmnd_str, '\0') + 1;
+                ASM_ERROR_HANDLE_(push_jmp_(OPCODE_JMP, operand_str, instructs, &labels), 
+                                 labels_dtor(&labels););
                 break;
             }
             case OPCODE_JL:
             {
-                const char* operand_str = strchr(comnd_str, '\0') + 1;
-                ASM_ERROR_HANDLE(push_instruct_with_operand_(OPCODE_JL, operand_str, instructs));
+                const char* operand_str = strchr(cmnd_str, '\0') + 1;
+                ASM_ERROR_HANDLE_(push_jmp_(OPCODE_JL, operand_str, instructs, &labels),
+                                 labels_dtor(&labels););
                 break;
             }
             case OPCODE_JLE:
             {
-                const char* operand_str = strchr(comnd_str, '\0') + 1;
-                ASM_ERROR_HANDLE(push_instruct_with_operand_(OPCODE_JLE, operand_str, instructs));
+                const char* operand_str = strchr(cmnd_str, '\0') + 1;
+                ASM_ERROR_HANDLE_(push_jmp_(OPCODE_JLE, operand_str, instructs, &labels),
+                                 labels_dtor(&labels););
                 break;
             }
             case OPCODE_JG:
             {
-                const char* operand_str = strchr(comnd_str, '\0') + 1;
-                ASM_ERROR_HANDLE(push_instruct_with_operand_(OPCODE_JG, operand_str, instructs));
+                const char* operand_str = strchr(cmnd_str, '\0') + 1;
+                ASM_ERROR_HANDLE_(push_jmp_(OPCODE_JG, operand_str, instructs, &labels),
+                                 labels_dtor(&labels););
                 break;
             }
             case OPCODE_JGE:
             {
-                const char* operand_str = strchr(comnd_str, '\0') + 1;
-                ASM_ERROR_HANDLE(push_instruct_with_operand_(OPCODE_JGE, operand_str, instructs));
+                const char* operand_str = strchr(cmnd_str, '\0') + 1;
+                ASM_ERROR_HANDLE_(push_jmp_(OPCODE_JGE, operand_str, instructs, &labels),
+                                 labels_dtor(&labels););
                 break;
             }
             case OPCODE_JE:
             {
-                const char* operand_str = strchr(comnd_str, '\0') + 1;
-                ASM_ERROR_HANDLE(push_instruct_with_operand_(OPCODE_JE, operand_str, instructs));
+                const char* operand_str = strchr(cmnd_str, '\0') + 1;
+                ASM_ERROR_HANDLE_(push_jmp_(OPCODE_JE, operand_str, instructs, &labels),
+                                 labels_dtor(&labels););
                 break;
             }
             case OPCODE_JNE:
             {
-                const char* operand_str = strchr(comnd_str, '\0') + 1;
-                ASM_ERROR_HANDLE(push_instruct_with_operand_(OPCODE_JNE, operand_str, instructs));
+                const char* operand_str = strchr(cmnd_str, '\0') + 1;
+                ASM_ERROR_HANDLE_(push_jmp_(OPCODE_JNE, operand_str, instructs, &labels),
+                                 labels_dtor(&labels););
+                break;
+            }
+
+            case OPCODE_LABEL:
+            {
+                const char* const operand_str = cmnd_str + 1;
+                if (!labels_push_unfinded(&labels, operand_str, strlen(operand_str), 
+                                         instructs->counter))
+                {
+                    fprintf(stderr, "Can't push label %s in %zu line\n", operand_str, ip + 1);
+                    labels_dtor(&labels);
+                    return ASM_ERROR_LABELS;
+                }
                 break;
             }
 
@@ -164,64 +214,73 @@ enum AsmError assembly(const asm_code_t asm_code, instructs_t* const instructs)
 
             case OPCODE_UNKNOWN:
             {
-                fprintf(stderr, "Incorrect command\n");
+                fprintf(stderr, "Incorrect command in %zu line\n", ip + 1);
+                labels_dtor(&labels);
                 return ASM_ERROR_INCORRECT_CMND;
             }
 
             default:
             {
-                fprintf(stderr, "it's soo bad!\n");
+                fprintf(stderr, "it's soo bad in %zu line!\n", ip + 1);
+                labels_dtor(&labels);
                 return ASM_ERROR_UNKNOWN;
             }
         }
         ++ip;
     }
 
+    labels_dtor(&labels);
+
     return asm_error_handler;
 }
-#undef stack_error_handle_
 
 
-static enum Opcode comnd_str_to_enum_(const char* const comnd_str)
+static enum Opcode comnd_str_to_enum_(const char* const cmnd_str)
 {
-    lassert(comnd_str, "");
+    lassert(cmnd_str, "");
 
-    if (strcmp(comnd_str, "PUSH") == 0)
+    if (strcmp(cmnd_str, "") == 0 || cmnd_str[0] == '#')
+        return OPCODE_ZERO;
+
+    if (strcmp(cmnd_str, "PUSH") == 0)
         return OPCODE_PUSH;
-    if (strcmp(comnd_str, "POP")  == 0)
+    if (strcmp(cmnd_str, "POP")  == 0)
         return OPCODE_POP;
 
-    if (strcmp(comnd_str, "ADD")  == 0)
+    if (strcmp(cmnd_str, "ADD")  == 0)
         return OPCODE_ADD;
-    if (strcmp(comnd_str, "SUB")  == 0)
+    if (strcmp(cmnd_str, "SUB")  == 0)
         return OPCODE_SUB;
-    if (strcmp(comnd_str, "MUL")  == 0)
+    if (strcmp(cmnd_str, "MUL")  == 0)
         return OPCODE_MUL;
-    if (strcmp(comnd_str, "DIV")  == 0)
+    if (strcmp(cmnd_str, "DIV")  == 0)
         return OPCODE_DIV;
 
-    if (strcmp(comnd_str, "OUT")  == 0)
+    if (strcmp(cmnd_str, "OUT")  == 0)
         return OPCODE_OUT;
-    if (strcmp(comnd_str, "IN")   == 0)
+    if (strcmp(cmnd_str, "IN")   == 0)
         return OPCODE_IN;
 
-    if (strcmp(comnd_str, "JMP")  == 0)
+    if (strcmp(cmnd_str, "JMP")  == 0)
         return OPCODE_JMP;
-    if (strcmp(comnd_str, "JL")   == 0)
+    if (strcmp(cmnd_str, "JL")   == 0)
         return OPCODE_JL;
-    if (strcmp(comnd_str, "JLE")  == 0)
+    if (strcmp(cmnd_str, "JLE")  == 0)
         return OPCODE_JLE;
-    if (strcmp(comnd_str, "JG")   == 0)
+    if (strcmp(cmnd_str, "JG")   == 0)
         return OPCODE_JG;
-    if (strcmp(comnd_str, "JGE")  == 0)
+    if (strcmp(cmnd_str, "JGE")  == 0)
         return OPCODE_JGE;
-    if (strcmp(comnd_str, "JE")   == 0)
+    if (strcmp(cmnd_str, "JE")   == 0)
         return OPCODE_JE;
-    if (strcmp(comnd_str, "JNE")  == 0)
+    if (strcmp(cmnd_str, "JNE")  == 0)
         return OPCODE_JNE;
+    
+    if (cmnd_str[0] == ':')
+        return OPCODE_LABEL;
 
  
-    if (strcmp(comnd_str, "HLT")  == 0)
+    if (strcmp(cmnd_str, "HLT")  == 0)
         return OPCODE_HLT;
     
     return OPCODE_UNKNOWN;
@@ -230,6 +289,9 @@ static enum Opcode comnd_str_to_enum_(const char* const comnd_str)
 static enum AsmError push_instruct_with_operand_(enum Opcode opcode, const char* operand_str,
                                                 instructs_t* const instructs)
 {
+    lassert(operand_str, "");
+    lassert(instructs, "");
+
     cmnd_t cmnd = {};
     cmnd.opcode = opcode;
 
@@ -306,4 +368,37 @@ static enum AsmError push_instruct_with_operand_(enum Opcode opcode, const char*
     }
 
     return ASM_ERROR_SUCCESS;
+}
+
+static enum AsmError push_jmp_(enum Opcode opcode, const char* operand_str,
+                               instructs_t* const instructs, labels_t* const labels)
+{
+    lassert(operand_str, "");
+    lassert(instructs, "");
+    lassert(labels, "");
+
+    enum AsmError asm_error_handler = ASM_ERROR_SUCCESS;
+
+    if (operand_str[0] == ':')
+    {
+        cmnd_t cmnd = {.imm = 0, .reg = 0, .mem = 0, .opcode = opcode };
+        instructs_push(instructs, &cmnd, 1);
+
+        label_t* const finded_label = labels_find(labels, operand_str + 1);
+        if (finded_label)
+        {
+            instructs_push(instructs, &finded_label->addr, sizeof(finded_label->addr));
+        }
+        else //TODO switch to fixat
+        {
+            fprintf(stderr, "Can't find label %s\n", operand_str + 1);
+            return ASM_ERROR_LABELS;
+        }
+    }
+    else
+    {
+        ASM_ERROR_HANDLE(push_instruct_with_operand_(opcode, operand_str, instructs));
+    }
+
+    return asm_error_handler;
 }

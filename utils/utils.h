@@ -22,7 +22,7 @@
 
 enum Opcode 
 {
-    OPCODE_UNKNOWN  = 0,
+    OPCODE_ZERO     = 0,
     OPCODE_PUSH     = 1,
     OPCODE_POP      = 2,
 
@@ -42,9 +42,13 @@ enum Opcode
     OPCODE_JE       = 14,
     OPCODE_JNE      = 15,
 
-    OPCODE_HLT      = 16
+    OPCODE_LABEL    = 16,
+
+    OPCODE_HLT      = 17,
+
+    OPCODE_UNKNOWN  = 18
 };
-static_assert(OPCODE_HLT < (1 << MAX_OPCODE_BITS));
+static_assert(OPCODE_UNKNOWN < (1 << MAX_OPCODE_BITS));
 
 typedef struct Cmnd
 {
@@ -53,27 +57,12 @@ typedef struct Cmnd
     bool reg: 1;
     bool imm: 1;
 } cmnd_t;
+static_assert(sizeof(cmnd_t) == 1);
 
 typedef int64_t operand_t;
 #define INOUT_OPERAND_CODE "%ld"
 
-static const size_t REGS_SIZE_   = 9;
+static const size_t REGS_SIZE_    = 9;
 static const size_t MEMORY_SIZE_ = 2048;
-
-/*!SECTION
-PUSH 30
-PUSH 70
-ADD
-PUSH 60
-PUSH 40
-SUB
-DIV
-PUSH 13
-PUSH 3
-SUB
-ADD
-OUT
-HLT
-*/
 
 #endif /*SPLU_UTILS_H*/

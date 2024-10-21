@@ -1,14 +1,23 @@
+# INIT
 PUSH 1
 POP R1
+
+# cycle begin
+:METKA
 PUSH R1
 PUSH R1
 MUL
+
 OUT
+# increment
 PUSH R1
 PUSH 1
 ADD
 POP R1
+
+# condition
 PUSH R1
 PUSH 10
-JL 18
+JL :METKA
+
 HLT

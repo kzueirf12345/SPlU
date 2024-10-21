@@ -6,7 +6,6 @@
 #include "asm_code.h"
 #include "utils.h"
 #include "logger/liblogger.h"
-#include "../asm_code/asm_code.h"
 
 #define CASE_ENUM_TO_STRING_(error) case error: return #error
 const char* asm_code_strerror(const enum AsmCodeError error)
