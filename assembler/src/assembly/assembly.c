@@ -220,6 +220,21 @@ enum AsmError assembly(const asm_code_t asm_code, instructs_t* const instructs)
                 break;
             }
 
+            case OPCODE_CALL:
+            {
+                char* const operand_str = strchr(cmnd_str, '\0') + 1;
+                ASM_ERROR_HANDLE_(push_jmp_(OPCODE_CALL, operand_str, instructs, labels, &fixup),
+                                 fixup_dtor(&fixup); labels_dtor(&labels););
+                break;
+            }
+
+            case OPCODE_RET:
+            {
+                cmnd_t cmnd = {.imm = 0, .reg = 0, .mem = 0, .opcode = OPCODE_RET };
+                instructs_push_back(instructs, &cmnd, 1);
+                break;
+            }
+
             //--------------------------------
 
             case OPCODE_HLT:
@@ -300,6 +315,11 @@ static enum Opcode comnd_str_to_enum_(const char* const cmnd_str)
     
     if (cmnd_str[0] == ':')
         return OPCODE_LABEL;
+
+    if (strcmp(cmnd_str, "CALL")   == 0)
+        return OPCODE_CALL;
+    if (strcmp(cmnd_str, "RET")  == 0)
+        return OPCODE_RET;
 
  
     if (strcmp(cmnd_str, "HLT")  == 0)

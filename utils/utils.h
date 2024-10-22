@@ -44,9 +44,12 @@ enum Opcode
 
     OPCODE_LABEL    = 16,
 
-    OPCODE_HLT      = 17,
+    OPCODE_CALL     = 17,
+    OPCODE_RET      = 18,
 
-    OPCODE_UNKNOWN  = 18
+    OPCODE_HLT      = 19,
+
+    OPCODE_UNKNOWN  = 20
 };
 static_assert(OPCODE_UNKNOWN < (1 << MAX_OPCODE_BITS));
 

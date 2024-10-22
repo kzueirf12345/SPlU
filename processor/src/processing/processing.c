@@ -162,6 +162,10 @@ enum ProcessorError processing(processor_t* const processor)
     stack_key_t stack = 0;
     STACK_ERROR_HANDLE_(STACK_CTOR(&stack, sizeof(operand_t), 0), stack_dtor(&stack););
 
+    stack_key_t stack_ret = 0;
+    STACK_ERROR_HANDLE_(STACK_CTOR(&stack_ret, sizeof(size_t), 0), 
+                        stack_dtor(&stack); stack_dtor(&stack_ret););
+
     bool is_hlt = false;
 
     while (!is_hlt && processor->ip < processor->instructs_size)
@@ -182,7 +186,7 @@ enum ProcessorError processing(processor_t* const processor)
             case OPCODE_PUSH:
             {
                 STACK_ERROR_HANDLE_(stack_push(&stack, get_operand_addr_(cmnd, processor)),
-                                    stack_dtor(&stack););
+                                    stack_dtor(&stack); stack_dtor(&stack_ret););
                 break;
             }
             case OPCODE_POP:
@@ -191,7 +195,8 @@ enum ProcessorError processing(processor_t* const processor)
                 // fprintf(stderr, "into pop\n");
 
                 operand_t pop_elem = 0;
-                STACK_ERROR_HANDLE_(stack_pop(&stack, &pop_elem), stack_dtor(&stack););
+                STACK_ERROR_HANDLE_(stack_pop(&stack, &pop_elem), 
+                                    stack_dtor(&stack); stack_dtor(&stack_ret););
 
                 memcpy(get_operand_addr_(cmnd, processor), &pop_elem, sizeof(pop_elem));
                 break;
@@ -204,11 +209,14 @@ enum ProcessorError processing(processor_t* const processor)
                 lassert(stack_size(stack) >= 2, "");
 
                 operand_t first_num = 0, second_num = 0;
-                STACK_ERROR_HANDLE_(stack_pop(&stack, &second_num), stack_dtor(&stack););
-                STACK_ERROR_HANDLE_(stack_pop(&stack, &first_num),  stack_dtor(&stack););
+                STACK_ERROR_HANDLE_(stack_pop(&stack, &second_num), 
+                                    stack_dtor(&stack); stack_dtor(&stack_ret););
+                STACK_ERROR_HANDLE_(stack_pop(&stack, &first_num),  
+                                    stack_dtor(&stack); stack_dtor(&stack_ret););
 
                 const operand_t sum = first_num + second_num;
-                STACK_ERROR_HANDLE_(stack_push(&stack, &sum), stack_dtor(&stack););
+                STACK_ERROR_HANDLE_(stack_push(&stack, &sum), 
+                                    stack_dtor(&stack); stack_dtor(&stack_ret););
                 break;
             }
             case OPCODE_SUB:
@@ -216,11 +224,15 @@ enum ProcessorError processing(processor_t* const processor)
                 lassert(stack_size(stack) >= 2, "");
 
                 operand_t first_num = 0, second_num = 0;
-                STACK_ERROR_HANDLE_(stack_pop(&stack, &second_num), stack_dtor(&stack););
-                STACK_ERROR_HANDLE_(stack_pop(&stack, &first_num),  stack_dtor(&stack););
+                STACK_ERROR_HANDLE_(stack_pop(&stack, &second_num), 
+                                    stack_dtor(&stack); stack_dtor(&stack_ret););
+                STACK_ERROR_HANDLE_(stack_pop(&stack, &first_num),  
+                                    stack_dtor(&stack); stack_dtor(&stack_ret););
 
                 const operand_t div = first_num - second_num;
-                STACK_ERROR_HANDLE_(stack_push(&stack, &div), stack_dtor(&stack););
+                STACK_ERROR_HANDLE_(stack_push(&stack, &div), 
+                                    stack_dtor(&stack);
+                                    stack_dtor(&stack_ret););
                 break;
             }
             case OPCODE_MUL:
@@ -228,11 +240,14 @@ enum ProcessorError processing(processor_t* const processor)
                 lassert(stack_size(stack) >= 2, "");
 
                 operand_t first_num = 0, second_num = 0;
-                STACK_ERROR_HANDLE_(stack_pop(&stack, &second_num), stack_dtor(&stack););
-                STACK_ERROR_HANDLE_(stack_pop(&stack, &first_num),  stack_dtor(&stack););
+                STACK_ERROR_HANDLE_(stack_pop(&stack, &second_num), 
+                                    stack_dtor(&stack); stack_dtor(&stack_ret););
+                STACK_ERROR_HANDLE_(stack_pop(&stack, &first_num),  
+                                    stack_dtor(&stack); stack_dtor(&stack_ret););
 
                 const operand_t mul = first_num * second_num;
-                STACK_ERROR_HANDLE_(stack_push(&stack, &mul), stack_dtor(&stack););
+                STACK_ERROR_HANDLE_(stack_push(&stack, &mul), 
+                                    stack_dtor(&stack); stack_dtor(&stack_ret););
                 break;
             }
             case OPCODE_DIV:
@@ -240,18 +255,22 @@ enum ProcessorError processing(processor_t* const processor)
                 lassert(stack_size(stack) >= 2, "");
 
                 operand_t first_num = 0, second_num = 0;
-                STACK_ERROR_HANDLE_(stack_pop(&stack, &second_num), stack_dtor(&stack););
-                STACK_ERROR_HANDLE_(stack_pop(&stack, &first_num),  stack_dtor(&stack););
+                STACK_ERROR_HANDLE_(stack_pop(&stack, &second_num), 
+                                    stack_dtor(&stack); stack_dtor(&stack_ret););
+                STACK_ERROR_HANDLE_(stack_pop(&stack, &first_num),  
+                                    stack_dtor(&stack); stack_dtor(&stack_ret););
 
 
                 if (second_num == 0)
                 {
                     fprintf(stderr, "Can't div by zero\n");
                     stack_dtor(&stack);
+                    stack_dtor(&stack_ret);
                     return PROCESSOR_ERROR_DIV_BY_ZERO;
                 }
                 const operand_t div = first_num / second_num;
-                STACK_ERROR_HANDLE_(stack_push(&stack, &div), stack_dtor(&stack););
+                STACK_ERROR_HANDLE_(stack_push(&stack, &div), 
+                                    stack_dtor(&stack); stack_dtor(&stack_ret););
                 break;
             }
 
@@ -262,12 +281,14 @@ enum ProcessorError processing(processor_t* const processor)
                 lassert(stack_size(stack) >= 1, "");
 
                 operand_t out_num = 0;
-                STACK_ERROR_HANDLE_(stack_pop(&stack, &out_num), stack_dtor(&stack););
+                STACK_ERROR_HANDLE_(stack_pop(&stack, &out_num), 
+                                    stack_dtor(&stack); stack_dtor(&stack_ret););
 
                 if (printf("Out: " INOUT_OPERAND_CODE "\n", out_num) <= 0)
                 {
                     perror("Can't printf out_num");
                     stack_dtor(&stack);
+                    stack_dtor(&stack_ret);
                     return PROCESSOR_ERROR_STANDARD_ERRNO;
                 }
                 break;
@@ -280,9 +301,11 @@ enum ProcessorError processing(processor_t* const processor)
                 {
                     perror("Can't scanf in_num");
                     stack_dtor(&stack);
+                    stack_dtor(&stack_ret);
                     return PROCESSOR_ERROR_STANDARD_ERRNO;
                 }
-                STACK_ERROR_HANDLE_(stack_push(&stack, &in_num), stack_dtor(&stack););
+                STACK_ERROR_HANDLE_(stack_push(&stack, &in_num), 
+                                    stack_dtor(&stack); stack_dtor(&stack_ret););
                 break;
             }
 
@@ -298,8 +321,10 @@ enum ProcessorError processing(processor_t* const processor)
                 lassert(stack_size(stack) >= 2, "");
 
                 operand_t first_num = 0, second_num = 0;
-                STACK_ERROR_HANDLE_(stack_pop(&stack, &second_num), stack_dtor(&stack););
-                STACK_ERROR_HANDLE_(stack_pop(&stack, &first_num),  stack_dtor(&stack););
+                STACK_ERROR_HANDLE_(stack_pop(&stack, &second_num), 
+                                    stack_dtor(&stack); stack_dtor(&stack_ret););
+                STACK_ERROR_HANDLE_(stack_pop(&stack, &first_num),  
+                                    stack_dtor(&stack); stack_dtor(&stack_ret););
 
                 const bool condition = first_num < second_num;
                 jmp_condition_handle_(condition, processor);
@@ -310,8 +335,10 @@ enum ProcessorError processing(processor_t* const processor)
                 lassert(stack_size(stack) >= 2, "");
 
                 operand_t first_num = 0, second_num = 0;
-                STACK_ERROR_HANDLE_(stack_pop(&stack, &second_num), stack_dtor(&stack););
-                STACK_ERROR_HANDLE_(stack_pop(&stack, &first_num),  stack_dtor(&stack););
+                STACK_ERROR_HANDLE_(stack_pop(&stack, &second_num), 
+                                    stack_dtor(&stack); stack_dtor(&stack_ret););
+                STACK_ERROR_HANDLE_(stack_pop(&stack, &first_num),  
+                                    stack_dtor(&stack); stack_dtor(&stack_ret););
 
                 const bool condition = first_num <= second_num;
                 jmp_condition_handle_(condition, processor);
@@ -322,8 +349,10 @@ enum ProcessorError processing(processor_t* const processor)
                 lassert(stack_size(stack) >= 2, "");
 
                 operand_t first_num = 0, second_num = 0;
-                STACK_ERROR_HANDLE_(stack_pop(&stack, &second_num), stack_dtor(&stack););
-                STACK_ERROR_HANDLE_(stack_pop(&stack, &first_num),  stack_dtor(&stack););
+                STACK_ERROR_HANDLE_(stack_pop(&stack, &second_num), 
+                                    stack_dtor(&stack); stack_dtor(&stack_ret););
+                STACK_ERROR_HANDLE_(stack_pop(&stack, &first_num),  
+                                    stack_dtor(&stack); stack_dtor(&stack_ret););
 
                 const bool condition = first_num > second_num;
                 jmp_condition_handle_(condition, processor);
@@ -334,8 +363,10 @@ enum ProcessorError processing(processor_t* const processor)
                 lassert(stack_size(stack) >= 2, "");
 
                 operand_t first_num = 0, second_num = 0;
-                STACK_ERROR_HANDLE_(stack_pop(&stack, &second_num), stack_dtor(&stack););
-                STACK_ERROR_HANDLE_(stack_pop(&stack, &first_num),  stack_dtor(&stack););
+                STACK_ERROR_HANDLE_(stack_pop(&stack, &second_num), 
+                                    stack_dtor(&stack); stack_dtor(&stack_ret););
+                STACK_ERROR_HANDLE_(stack_pop(&stack, &first_num),  
+                                    stack_dtor(&stack); stack_dtor(&stack_ret););
 
                 const bool condition = first_num >= second_num;
                 jmp_condition_handle_(condition, processor);
@@ -346,8 +377,10 @@ enum ProcessorError processing(processor_t* const processor)
                 lassert(stack_size(stack) >= 2, "");
 
                 operand_t first_num = 0, second_num = 0;
-                STACK_ERROR_HANDLE_(stack_pop(&stack, &second_num), stack_dtor(&stack););
-                STACK_ERROR_HANDLE_(stack_pop(&stack, &first_num),  stack_dtor(&stack););
+                STACK_ERROR_HANDLE_(stack_pop(&stack, &second_num), 
+                                    stack_dtor(&stack); stack_dtor(&stack_ret););
+                STACK_ERROR_HANDLE_(stack_pop(&stack, &first_num),  
+                                    stack_dtor(&stack); stack_dtor(&stack_ret););
 
                 const bool condition = first_num == second_num;
                 jmp_condition_handle_(condition, processor);
@@ -358,8 +391,10 @@ enum ProcessorError processing(processor_t* const processor)
                 lassert(stack_size(stack) >= 2, "");
 
                 operand_t first_num = 0, second_num = 0;
-                STACK_ERROR_HANDLE_(stack_pop(&stack, &second_num), stack_dtor(&stack););
-                STACK_ERROR_HANDLE_(stack_pop(&stack, &first_num),  stack_dtor(&stack););
+                STACK_ERROR_HANDLE_(stack_pop(&stack, &second_num), 
+                                    stack_dtor(&stack); stack_dtor(&stack_ret););
+                STACK_ERROR_HANDLE_(stack_pop(&stack, &first_num),  
+                                    stack_dtor(&stack); stack_dtor(&stack_ret););
 
                 const bool condition = first_num != second_num;
                 jmp_condition_handle_(condition, processor);
@@ -370,7 +405,26 @@ enum ProcessorError processing(processor_t* const processor)
             {
                 fprintf(stderr, "LABEL INSTRUCT. It's not valid in processor\n");
                 stack_dtor(&stack);
+                stack_dtor(&stack_ret);
                 return PROCESSOR_ERROR_UNKNOWN_INSTRUCT;
+            }
+
+            case OPCODE_CALL:
+            {
+                const size_t ret_ip = processor->ip + sizeof(operand_t);
+                STACK_ERROR_HANDLE_(stack_push(&stack_ret, &ret_ip),
+                                    stack_dtor(&stack); stack_dtor(&stack_ret););
+                jmp_condition_handle_(true, processor);
+                break;
+            }
+
+            case OPCODE_RET:
+            {
+                lassert(!stack_is_empty(stack_ret), "");
+
+                STACK_ERROR_HANDLE_(stack_pop(&stack_ret, &processor->ip), 
+                                    stack_dtor(&stack); stack_dtor(&stack_ret););
+                break;
             }
 
             //-----------------------------
@@ -388,18 +442,21 @@ enum ProcessorError processing(processor_t* const processor)
             {
                 fprintf(stderr, "UNKNOWN INSTRUCT\n");
                 stack_dtor(&stack);
+                stack_dtor(&stack_ret);
                 return PROCESSOR_ERROR_UNKNOWN_INSTRUCT;
             }
             default:
             {
                 fprintf(stderr, "Pizdec\n");
                 stack_dtor(&stack);
+                stack_dtor(&stack_ret);
                 return PROCESSOR_ERROR_UNKNOWN_INSTRUCT;
             }
         }
     }
 
     stack_dtor(&stack);
+    stack_dtor(&stack_ret);
     return PROCESSOR_ERROR_SUCCESS;
 }
 #undef STACK_ERROR_HANDLE_
