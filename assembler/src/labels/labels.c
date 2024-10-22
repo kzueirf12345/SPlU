@@ -20,32 +20,19 @@ const char* labels_strerror(const enum LabelsError error)
 #undef CASE_ENUM_TO_STRING_
 
 
-enum LabelsError labels_ctor(labels_t* const labels, const size_t labels_size, 
-                             const size_t label_name_size)
+enum LabelsError labels_ctor(labels_t* const labels, const size_t count_label_names)
 {
     lassert(labels, "");
-    lassert(labels_size, "");
-    lassert(label_name_size, "");
+    lassert(count_label_names, "");
 
-    labels->labels = (label_t*)calloc(labels_size, sizeof(*labels->labels));
+    labels->labels = (label_t*)calloc(count_label_names, sizeof(*labels->labels));
     if (!labels->labels)
     {
         perror("Can't calloc labels->labels");
         return LABELS_ERROR_FAILURE;
     }
-    labels->size = labels_size;
+    labels->size = count_label_names;
     labels->count = 0;
-
-    for (size_t label_ind = 0; label_ind < labels_size; ++label_ind)
-    {
-        labels->labels[label_ind].name = calloc(label_name_size, sizeof(char));
-        if (!labels->labels[label_ind].name)
-        {
-            perror("Can't calloc label name in labels");
-            return LABELS_ERROR_FAILURE;
-        }
-        labels->labels[label_ind].name_size = label_name_size;
-    }
 
     return LABELS_ERROR_SUCCESS;
 }
@@ -56,15 +43,16 @@ void labels_dtor(labels_t* const labels)
     lassert(labels->labels, "");
     lassert(labels->count < labels->size, "");
 
+#ifndef NDEBUG
     for (size_t label_ind = 0; label_ind < labels->size; ++label_ind)
     {
-        free(labels->labels[label_ind].name);
-        IF_DEBUG(labels->labels[label_ind].name = NULL;)
-        IF_DEBUG(labels->labels[label_ind].addr = 0;)
+        labels->labels[label_ind].name = NULL;
+        labels->labels[label_ind].addr = 0;
     }
+    labels->count = 0;
+    labels->size  = 0;
+#endif /*NDEBUG*/
     free(labels->labels); IF_DEBUG(labels->labels = NULL;)
-    IF_DEBUG(labels->count = 0;)
-    IF_DEBUG(labels->size  = 0;)
 }
 
 
@@ -73,11 +61,9 @@ void labels_push(labels_t* const labels, label_t label)
     lassert(labels, "");
     lassert(labels->labels, "");
     lassert(label.name, "");
-    lassert(label.name_size, "");
-    lassert(label.name_size < labels->labels->name_size, "");
     lassert(labels->count < labels->size, "");
 
-    strncpy(labels->labels[labels->count].name, label.name, label.name_size);
+    labels->labels[labels->count].name = label.name;
     labels->labels[labels->count].addr = label.addr;
     ++labels->count;
 }
@@ -106,8 +92,6 @@ bool labels_push_unfinded(labels_t* const labels, label_t label)
     lassert(labels, "");
     lassert(labels->labels, "");
     lassert(label.name, "");
-    lassert(label.name_size, "");
-    lassert(label.name_size < labels->labels->name_size, "");
     lassert(labels->count < labels->size, "");
 
     if (!labels_find(*labels, label.name))

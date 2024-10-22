@@ -25,7 +25,7 @@ const char* fixup_strerror(const enum FixupError error)
 
 #define STACK_ERROR_HANDLE_(call_func, ...)                                                         \
     do {                                                                                            \
-        stack_error_handler = call_func;                                                            \
+        const enum StackError stack_error_handler = call_func;                                      \
         if (stack_error_handler)                                                                    \
         {                                                                                           \
             fprintf(stderr, "Can't " #call_func". Stack error: %s\n",                               \
@@ -40,8 +40,6 @@ enum FixupError fixup_ctor(fixup_t* const fixup, const size_t count_label_names)
     lassert(fixup, "");
     lassert(count_label_names, "");
 
-    enum StackError stack_error_handler = STACK_ERROR_SUCCESS;
-
     fixup->label_calls = calloc(count_label_names, sizeof(*fixup->label_calls));
     if (!fixup->label_calls)
     {
@@ -50,14 +48,12 @@ enum FixupError fixup_ctor(fixup_t* const fixup, const size_t count_label_names)
     }
     fixup->size = count_label_names;
 
-    for (size_t ind = 0; ind < fixup->size; ++ind) //FIXME
+    for (size_t ind = 0; ind < fixup->size; ++ind)
     {
         fixup->label_calls[ind] = 0;
-        // fprintf(stderr, "fixup->label_calls[%zu]\n", ind);
         STACK_ERROR_HANDLE_(STACK_CTOR(&fixup->label_calls[ind], sizeof(label_call_t), 0), 
                             stack_dtor(&fixup->label_calls[ind]););
     }
-    // fprintf(stderr, "lol\n");
 
     return FIXUP_ERROR_SUCCESS;
 }
@@ -80,8 +76,6 @@ enum FixupError fixup_push(fixup_t* const fixup, label_call_t label_call)
 {
     lassert(fixup, "");
     lassert(label_call.name, "");
-
-    enum StackError stack_error_handler = STACK_ERROR_SUCCESS;
 
     stack_key_t* stack_ptr = fixup_find_(fixup, label_call.name);
     if (stack_ptr == NULL)
@@ -138,8 +132,6 @@ enum FixupError fixup_processing(const fixup_t* const fixup, const labels_t labe
     lassert(fixup->size, "");
     lassert(labels.labels, "");
     lassert(labels.size, "");
-
-    enum StackError stack_error_handler = STACK_ERROR_SUCCESS;
 
     for (size_t stack_ind = 0; 
          stack_ind < fixup->size && !stack_is_empty(fixup->label_calls[stack_ind]); 

@@ -24,9 +24,8 @@ const char* asm_code_strerror(const enum AsmCodeError error)
 
 static enum AsmCodeError fill_asm_code_string_count_and_split_ (asm_code_t* const asm_code);
 static enum AsmCodeError fill_asm_code_string_ptrs_            (asm_code_t* const asm_code);
-static enum AsmCodeError fill_asm_code_size_   (asm_code_t* const asm_code, FILE** const input_file);
-static enum AsmCodeError fill_asm_code_data_   (asm_code_t* const asm_code, FILE** const input_file);
-static enum AsmCodeError fill_asm_code_spaces_ (asm_code_t* const asm_code);
+static enum AsmCodeError fill_asm_code_size_ (asm_code_t* const asm_code, FILE** const input_file);
+static enum AsmCodeError fill_asm_code_data_ (asm_code_t* const asm_code, FILE** const input_file);
 
 
 enum AsmCodeError asm_code_ctor(const char* const input_filename, asm_code_t* const asm_code)
@@ -34,18 +33,17 @@ enum AsmCodeError asm_code_ctor(const char* const input_filename, asm_code_t* co
     lassert(input_filename, "");
     lassert(asm_code, "");
 
-    enum AsmCodeError asm_code_error_handler = ASM_CODE_ERROR_SUCCESS;
-
     FILE* input_file = fopen(input_filename, "rb");
     if (!input_file)
     {
         perror("Can't fopen input file");
         return ASM_CODE_ERROR_FAILURE;
     }
-    setbuf(input_file, NULL);
+    setbuf(input_file, NULL); // TODO mmap
 
     ASM_CODE_ERROR_HANDLE(fill_asm_code_size_(asm_code, &input_file));
-    ASM_CODE_ERROR_HANDLE(fill_asm_code_data_(asm_code, &input_file));
+    ASM_CODE_ERROR_HANDLE(fill_asm_code_data_(asm_code, &input_file), 
+                          free(asm_code->code); IF_DEBUG(asm_code->code = NULL););
 
     if (fclose(input_file))
     {
@@ -54,11 +52,14 @@ enum AsmCodeError asm_code_ctor(const char* const input_filename, asm_code_t* co
     }
     IF_DEBUG(input_file = NULL;)
 
-    ASM_CODE_ERROR_HANDLE(fill_asm_code_string_count_and_split_(asm_code));
-    ASM_CODE_ERROR_HANDLE(fill_asm_code_string_ptrs_           (asm_code));
-    ASM_CODE_ERROR_HANDLE(fill_asm_code_spaces_                (asm_code));
+    ASM_CODE_ERROR_HANDLE(fill_asm_code_string_count_and_split_(asm_code),
+                          free(asm_code->code); IF_DEBUG(asm_code->code = NULL;));
 
-    return asm_code_error_handler;
+    ASM_CODE_ERROR_HANDLE(fill_asm_code_string_ptrs_           (asm_code),
+                          free(asm_code->code);   IF_DEBUG(asm_code->code   = NULL;)
+                          free(asm_code->comnds); IF_DEBUG(asm_code->comnds = NULL;));
+
+    return ASM_CODE_ERROR_SUCCESS;
 }
 
 static enum AsmCodeError fill_asm_code_size_(asm_code_t* const asm_code, FILE** const input_file) 
@@ -111,12 +112,10 @@ enum AsmCodeError fill_asm_code_data_(asm_code_t* const asm_code, FILE** const i
         return ASM_CODE_ERROR_FAILURE;
     }
 
-    asm_code->code[asm_code->code_size - 1] = '\0';
-
     return ASM_CODE_ERROR_SUCCESS;
 }
 
-static enum AsmCodeError fill_asm_code_string_count_and_split_ (asm_code_t* const asm_code)
+static enum AsmCodeError fill_asm_code_string_count_and_split_(asm_code_t* const asm_code)
 {
     lassert(asm_code, "");
     lassert(asm_code->code_size, "");
@@ -126,10 +125,7 @@ static enum AsmCodeError fill_asm_code_string_count_and_split_ (asm_code_t* cons
     for (size_t ind = 0; ind < asm_code->code_size; ++ind)
     {
         if (asm_code->code[ind] == '\n')
-        {
-            asm_code->code[ind] = '\0';
-            ++asm_code->comnds_size;
-        }
+          ++asm_code->comnds_size;
     }
 
     return ASM_CODE_ERROR_SUCCESS;
@@ -151,38 +147,25 @@ static enum AsmCodeError fill_asm_code_string_ptrs_(asm_code_t* const asm_code)
 
     *asm_code->comnds = asm_code->code;
     lassert(*asm_code->comnds, "");
-    
 
+
+    const char * const SOUGHTABLE_SYMBOLS = " \n";
+    char* finded_symbol_ptr = asm_code->code;
     char** string_ptr = asm_code->comnds + 1;
-    for (size_t string_ind = 1; string_ind < asm_code->code_size; ++string_ind)
-    {
-        char* const string = asm_code->code + string_ind;
 
-        lassert(string - 1, "");
-        if  (*(string - 1) == '\0')
+    while ((finded_symbol_ptr = strpbrk(finded_symbol_ptr, SOUGHTABLE_SYMBOLS)) 
+         && (size_t)(finded_symbol_ptr - asm_code->code + 1) != asm_code->code_size)
+    {
+        lassert(finded_symbol_ptr >= asm_code->code, "");
+        
+        if (*finded_symbol_ptr == '\n')
         {
-            *string_ptr = string;
+            *string_ptr = finded_symbol_ptr + 1; 
             ++string_ptr;
         }
-    }
 
-    return ASM_CODE_ERROR_SUCCESS;
-}
-
-static enum AsmCodeError fill_asm_code_spaces_ (asm_code_t* const asm_code)
-{
-    lassert(asm_code, "");
-    lassert(asm_code->code_size, "");
-    lassert(asm_code->code, "");
-
-    for (size_t cmnd_ind = 0; cmnd_ind < asm_code->comnds_size; ++cmnd_ind)
-    {
-        char* asm_code_ptr = strchr(asm_code->comnds[cmnd_ind], ' ');
-        while (asm_code_ptr)
-        {
-            *asm_code_ptr = '\0';
-            asm_code_ptr = strchr(asm_code_ptr + 1, ' ');
-        }
+        *finded_symbol_ptr = '\0';
+        ++finded_symbol_ptr;
     }
 
     return ASM_CODE_ERROR_SUCCESS;

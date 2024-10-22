@@ -42,13 +42,25 @@ static enum AsmError push_jmp_(enum Opcode opcode, char* operand_str,
 
 #define FIXUP_ERROR_HANDLE_(call_func, ...)                                                         \
     do {                                                                                            \
-        fixup_error_handler = call_func;                                                            \
+        const enum FixupError fixup_error_handler = call_func;                                      \
         if (fixup_error_handler)                                                                    \
         {                                                                                           \
             fprintf(stderr, "Can't " #call_func". Fixup error: %s\n",                               \
                             fixup_strerror(fixup_error_handler));                                   \
             __VA_ARGS__                                                                             \
             return ASM_ERROR_FIXUP;                                                                 \
+        }                                                                                           \
+    } while(0)
+
+#define LABELS_ERROR_HANDLE_(call_func, ...)                                                         \
+    do {                                                                                            \
+        const enum LabelsError labels_error_handler = call_func;                                      \
+        if (labels_error_handler)                                                                    \
+        {                                                                                           \
+            fprintf(stderr, "Can't " #call_func". Labels error: %s\n",                               \
+                            labels_strerror(labels_error_handler));                                   \
+            __VA_ARGS__                                                                             \
+            return ASM_ERROR_LABELS;                                                                \
         }                                                                                           \
     } while(0)
 
@@ -59,23 +71,15 @@ enum AsmError assembly(const asm_code_t asm_code, instructs_t* const instructs)
 {
     lassert(instructs, "");
 
-    enum AsmError asm_error_handler = ASM_ERROR_SUCCESS;
-    enum LabelsError labels_error_handler = LABELS_ERROR_SUCCESS;
-    enum FixupError fixup_error_handler = FIXUP_ERROR_SUCCESS;
-
-    const size_t LABELS_SIZE     = 2047; //FIXME lol 2048+ not work
-    const size_t LABEL_NAME_SIZE = 256;
+    const size_t LABELS_SIZE = 2048;
 
     labels_t labels = {};
-    if (labels_ctor(&labels, LABELS_SIZE, LABEL_NAME_SIZE))
-    {
-        fprintf(stderr, "Can't labels_ctor. Labels error: %s", 
-                labels_strerror(labels_error_handler));
-        return ASM_ERROR_LABELS;
-    }
+    LABELS_ERROR_HANDLE_(labels_ctor(&labels, LABELS_SIZE), 
+                         labels_dtor(&labels););
 
     fixup_t fixup = {};
-    FIXUP_ERROR_HANDLE_(fixup_ctor(&fixup, LABELS_SIZE), labels_dtor(&labels););
+    FIXUP_ERROR_HANDLE_(fixup_ctor(&fixup, LABELS_SIZE), 
+                        fixup_dtor(&fixup); labels_dtor(&labels););
 
     size_t ip = 0;
 
@@ -208,8 +212,7 @@ enum AsmError assembly(const asm_code_t asm_code, instructs_t* const instructs)
             case OPCODE_LABEL:
             {
                 char* const operand_str = cmnd_str + 1;
-                const label_t label = {.name = operand_str, .name_size = strlen(operand_str), 
-                                       .addr = instructs->counter};
+                const label_t label = {.name = operand_str, .addr = instructs->counter};
                 if (!labels_push_unfinded(&labels, label))
                 {
                     fprintf(stderr, "Can't push label %s in %zu line\n", operand_str, ip + 1);
@@ -268,65 +271,49 @@ enum AsmError assembly(const asm_code_t asm_code, instructs_t* const instructs)
     fixup_dtor(&fixup);
     labels_dtor(&labels);
 
-    return asm_error_handler;
+    return ASM_ERROR_SUCCESS;
 }
 #undef ASM_ERROR_HANDLE_
+#undef LABELS_ERROR_HANDLE_
 
 static enum Opcode comnd_str_to_enum_(const char* const cmnd_str)
 {
     lassert(cmnd_str, "");
 
-    if (strcmp(cmnd_str, "") == 0 || cmnd_str[0] == '#')
-        return OPCODE_ZERO;
+    if (strcmp(cmnd_str, "") == 0 || cmnd_str[0] == '#') return OPCODE_ZERO;
 
-    if (strcmp(cmnd_str, "PUSH") == 0)
-        return OPCODE_PUSH;
-    if (strcmp(cmnd_str, "POP")  == 0)
-        return OPCODE_POP;
+    if (strcmp(cmnd_str, "PUSH") == 0) return OPCODE_PUSH;
+    if (strcmp(cmnd_str, "POP")  == 0) return OPCODE_POP;
 
-    if (strcmp(cmnd_str, "ADD")  == 0)
-        return OPCODE_ADD;
-    if (strcmp(cmnd_str, "SUB")  == 0)
-        return OPCODE_SUB;
-    if (strcmp(cmnd_str, "MUL")  == 0)
-        return OPCODE_MUL;
-    if (strcmp(cmnd_str, "DIV")  == 0)
-        return OPCODE_DIV;
+    if (strcmp(cmnd_str, "ADD")  == 0) return OPCODE_ADD;
+    if (strcmp(cmnd_str, "SUB")  == 0) return OPCODE_SUB;
+    if (strcmp(cmnd_str, "MUL")  == 0) return OPCODE_MUL;
+    if (strcmp(cmnd_str, "DIV")  == 0) return OPCODE_DIV;
 
-    if (strcmp(cmnd_str, "OUT")  == 0)
-        return OPCODE_OUT;
-    if (strcmp(cmnd_str, "IN")   == 0)
-        return OPCODE_IN;
+    if (strcmp(cmnd_str, "OUT")  == 0) return OPCODE_OUT;
+    if (strcmp(cmnd_str, "IN")   == 0) return OPCODE_IN;
 
-    if (strcmp(cmnd_str, "JMP")  == 0)
-        return OPCODE_JMP;
-    if (strcmp(cmnd_str, "JL")   == 0)
-        return OPCODE_JL;
-    if (strcmp(cmnd_str, "JLE")  == 0)
-        return OPCODE_JLE;
-    if (strcmp(cmnd_str, "JG")   == 0)
-        return OPCODE_JG;
-    if (strcmp(cmnd_str, "JGE")  == 0)
-        return OPCODE_JGE;
-    if (strcmp(cmnd_str, "JE")   == 0)
-        return OPCODE_JE;
-    if (strcmp(cmnd_str, "JNE")  == 0)
-        return OPCODE_JNE;
+    if (strcmp(cmnd_str, "JMP")  == 0) return OPCODE_JMP;
+    if (strcmp(cmnd_str, "JL")   == 0) return OPCODE_JL;
+    if (strcmp(cmnd_str, "JLE")  == 0) return OPCODE_JLE;
+    if (strcmp(cmnd_str, "JG")   == 0) return OPCODE_JG;
+    if (strcmp(cmnd_str, "JGE")  == 0) return OPCODE_JGE;
+    if (strcmp(cmnd_str, "JE")   == 0) return OPCODE_JE;
+    if (strcmp(cmnd_str, "JNE")  == 0) return OPCODE_JNE;
     
-    if (cmnd_str[0] == ':')
-        return OPCODE_LABEL;
+    if (cmnd_str[0]            == ':') return OPCODE_LABEL;
 
-    if (strcmp(cmnd_str, "CALL")   == 0)
-        return OPCODE_CALL;
-    if (strcmp(cmnd_str, "RET")  == 0)
-        return OPCODE_RET;
+    if (strcmp(cmnd_str, "CALL") == 0) return OPCODE_CALL;
+    if (strcmp(cmnd_str, "RET")  == 0) return OPCODE_RET;
 
- 
-    if (strcmp(cmnd_str, "HLT")  == 0)
-        return OPCODE_HLT;
+    if (strcmp(cmnd_str, "HLT")  == 0) return OPCODE_HLT;
     
     return OPCODE_UNKNOWN;
 }
+
+static enum AsmError fill_cmnd_   (cmnd_t* const cmnd, enum Opcode opcode, const char* operand_str);
+static enum AsmError handle_cmnd_ (cmnd_t* const cmnd, instructs_t* const instructs, 
+                                   const char* const operand_str);
 
 static enum AsmError push_instruct_with_operand_(enum Opcode opcode, const char* operand_str,
                                                 instructs_t* const instructs)
@@ -335,19 +322,35 @@ static enum AsmError push_instruct_with_operand_(enum Opcode opcode, const char*
     lassert(instructs, "");
 
     cmnd_t cmnd = {};
-    cmnd.opcode = opcode;
 
-    if (operand_str[0] == '[' && (cmnd.opcode == OPCODE_PUSH || cmnd.opcode == OPCODE_POP))
+    ASM_ERROR_HANDLE(fill_cmnd_(&cmnd, opcode, operand_str));
+
+    instructs_push_back(instructs, &cmnd, 1);
+
+    ASM_ERROR_HANDLE(handle_cmnd_(&cmnd, instructs, operand_str));
+
+    return ASM_ERROR_SUCCESS;
+}
+
+
+static enum AsmError fill_cmnd_(cmnd_t* const cmnd, enum Opcode opcode, const char* operand_str)
+{
+    lassert(cmnd, "");
+    lassert(operand_str, "");
+
+    cmnd->opcode = opcode;
+
+    if (operand_str[0] == '[' && (cmnd->opcode == OPCODE_PUSH || cmnd->opcode == OPCODE_POP))
     {
-        cmnd.mem = true;
+        cmnd->mem = true;
         ++operand_str;
     }
 
     if (isdigit(operand_str[0])) 
     {
-        cmnd.imm = true;
+        cmnd->imm = true;
 
-        if (!cmnd.mem && cmnd.opcode == OPCODE_POP)
+        if (!cmnd->mem && cmnd->opcode == OPCODE_POP)
         {
             fprintf(stderr, "Incorrect pop argument\n");
             return ASM_ERROR_INCORRECT_ARG;
@@ -355,12 +358,12 @@ static enum AsmError push_instruct_with_operand_(enum Opcode opcode, const char*
 
         if (strchr(operand_str, '+'))
         {
-            cmnd.reg = true;
+            cmnd->reg = true;
         }
     }
     else if (isalpha(operand_str[0]) && !strchr(operand_str, '+')) 
     {
-        cmnd.reg = true;
+        cmnd->reg = true;
     }
     else
     {
@@ -368,12 +371,20 @@ static enum AsmError push_instruct_with_operand_(enum Opcode opcode, const char*
         return ASM_ERROR_INCORRECT_ARG;
     }
 
-    instructs_push_back(instructs, &cmnd, 1);
+    return ASM_ERROR_SUCCESS;
+}
+
+static enum AsmError handle_cmnd_ (cmnd_t* const cmnd, instructs_t* const instructs, 
+                                   const char* const operand_str)
+{
+    lassert(cmnd, "");
+    lassert(instructs, "");
+    lassert(operand_str, "");
 
     operand_t imm_num = 0;
     operand_t reg_num = 0;
 
-    if (cmnd.imm & cmnd.reg)
+    if (cmnd->imm && cmnd->reg)
     {
         if (sscanf(operand_str, INOUT_OPERAND_CODE "+R" INOUT_OPERAND_CODE, 
                                 &imm_num, &reg_num) != 2)
@@ -385,7 +396,7 @@ static enum AsmError push_instruct_with_operand_(enum Opcode opcode, const char*
         instructs_push_back(instructs, &imm_num, sizeof(operand_t));
         instructs_push_back(instructs, &reg_num, sizeof(operand_t));
     }
-    else if (cmnd.imm)
+    else if (cmnd->imm)
     {
         if (sscanf(operand_str, INOUT_OPERAND_CODE, &imm_num) != 1)
         {
@@ -394,7 +405,7 @@ static enum AsmError push_instruct_with_operand_(enum Opcode opcode, const char*
         }
         instructs_push_back(instructs, &imm_num, sizeof(operand_t));
     }
-    else if (cmnd.reg)
+    else if (cmnd->reg)
     {
         if (sscanf(operand_str, "R" INOUT_OPERAND_CODE, &reg_num) != 1)
         {
@@ -419,9 +430,6 @@ static enum AsmError push_jmp_(enum Opcode opcode, char* operand_str,
     lassert(operand_str, "");
     lassert(instructs, "");
 
-    enum AsmError asm_error_handler = ASM_ERROR_SUCCESS;
-    enum FixupError fixup_error_handler = FIXUP_ERROR_SUCCESS;
-
     if (operand_str[0] == ':')
     {
         cmnd_t cmnd = {.imm = 0, .reg = 0, .mem = 0, .opcode = opcode };
@@ -434,8 +442,7 @@ static enum AsmError push_jmp_(enum Opcode opcode, char* operand_str,
         }
         else
         {
-            const label_call_t label_call = {.name = operand_str + 1, 
-                                             .name_size = strlen(operand_str + 1),
+            const label_call_t label_call = {.name = operand_str + 1,
                                              .ip = instructs->data + instructs->counter};
 
             FIXUP_ERROR_HANDLE_(fixup_push(fixup, label_call));
@@ -449,6 +456,6 @@ static enum AsmError push_jmp_(enum Opcode opcode, char* operand_str,
         ASM_ERROR_HANDLE(push_instruct_with_operand_(opcode, operand_str, instructs));
     }
 
-    return asm_error_handler;
+    return ASM_ERROR_SUCCESS;
 }
 #undef FIXUP_ERROR_HANDLE_

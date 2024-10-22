@@ -20,7 +20,7 @@ const char* fixup_strerror(const enum FixupError error);
 
 #define FIXUP_ERROR_HANDLE(call_func, ...)                                                          \
     do {                                                                                            \
-        fixup_error_handler = call_func;                                                            \
+        const enum FixupError fixup_error_handler = call_func;                                                            \
         if (fixup_error_handler)                                                                    \
         {                                                                                           \
             fprintf(stderr, "Can't " #call_func". Fixup error: %s\n",                               \
@@ -34,7 +34,6 @@ const char* fixup_strerror(const enum FixupError error);
 typedef struct LabelCall
 {
     char* name;
-    size_t name_size;
     uint8_t* ip;
 } label_call_t;
 

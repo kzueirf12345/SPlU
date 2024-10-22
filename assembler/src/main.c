@@ -10,10 +10,6 @@
 
 int main()
 {
-    enum AsmError asm_error_handler = ASM_ERROR_SUCCESS;
-    enum AsmCodeError asm_code_error_handler = ASM_CODE_ERROR_SUCCESS;
-    enum InstructsError instructs_error_handler = INSTRUCTS_ERROR_SUCCESS;
-
     if (logger_ctor())
     {
         fprintf(stderr, "Can't logger_ctor()\n");
@@ -35,7 +31,7 @@ int main()
 
     instructs_t instructs = {};
     INSTRUCTS_ERROR_HANDLE(instructs_ctor(&instructs, asm_code.comnds_size * 3 * sizeof(operand_t)),
-                           logger_dtor(); instructs_dtor(&instructs);); //TODO count size
+                           logger_dtor(); instructs_dtor(&instructs);); //TODO count size and dynamic array
 
     ASM_ERROR_HANDLE(assembly(asm_code, &instructs),
                      logger_dtor(); asm_code_dtor(&asm_code); instructs_dtor(&instructs););

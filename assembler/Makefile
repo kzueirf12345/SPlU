@@ -1,4 +1,4 @@
-.PHONY: all clean
+.PHONY: all build start clean
 
 PROJECT_NAME = assembler
 
@@ -62,6 +62,7 @@ $(BUILD_DIR)/%.o : $(SRC_DIR)/%.c | $(BUILD_DIRS) stack_build logger_build
 $(BUILD_DIRS):
 	mkdir $@
 
+.PHONY: stack_build stack_rebuild logger_build logger_rebuild clean_obj clean_deps clean_out stack_clean logger_clean
 
 stack_rebuild: stack_build stack_clean
 

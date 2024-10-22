@@ -23,7 +23,7 @@ enum InstructsError instructs_ctor(instructs_t* const instructs, const size_t si
 {
     lassert(instructs, "");
 
-    instructs->data = calloc(size, 1);
+    instructs->data = calloc(size, sizeof(*instructs->data));
     if (!instructs->data)
     {
         perror("Can't calloc insturcts");

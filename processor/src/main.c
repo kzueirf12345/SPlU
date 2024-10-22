@@ -4,8 +4,6 @@
 
 int main()
 {
-    enum ProcessorError processor_error_handler = PROCESSOR_ERROR_SUCCESS;
-
     if (logger_ctor())
     {
         fprintf(stderr, "Can't logger_ctor()\n");
@@ -21,7 +19,7 @@ int main()
     //==============================
 
     processor_t processor = {}; 
-    //TODO create path var
+    
     PROCESSOR_ERROR_HANDLE(processor_ctor(&processor, "../assets/program_code.bin"), 
                            logger_dtor(); processor_dtor(&processor););
     

@@ -16,7 +16,7 @@ const char* instructs_strerror(const enum InstructsError instruct_error);
 
 #define INSTRUCTS_ERROR_HANDLE(call_func, ...)                                                         \
     do {                                                                                            \
-        instructs_error_handler = call_func;                                                     \
+        const enum InstructsError instructs_error_handler = call_func;                                                     \
         if (instructs_error_handler)                                                             \
         {                                                                                           \
             fprintf(stderr, "Can't " #call_func". Instructs error: %s\n",                        \

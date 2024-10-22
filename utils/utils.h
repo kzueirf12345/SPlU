@@ -55,7 +55,7 @@ static_assert(OPCODE_UNKNOWN < (1 << MAX_OPCODE_BITS));
 
 typedef struct Cmnd
 {
-    unsigned char opcode: MAX_OPCODE_BITS; //REVIEW сучка
+    unsigned char opcode: MAX_OPCODE_BITS;
     bool mem: 1;
     bool reg: 1;
     bool imm: 1;

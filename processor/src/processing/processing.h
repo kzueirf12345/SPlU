@@ -21,7 +21,7 @@ const char* processor_strerror(const enum ProcessorError error);
 
 #define PROCESSOR_ERROR_HANDLE(call_func, ...)                                                      \
     do {                                                                                            \
-        processor_error_handler = call_func;                                                        \
+        const enum ProcessorError processor_error_handler = call_func;                                                        \
         if (processor_error_handler)                                                                \
         {                                                                                           \
             fprintf(stderr, "Can't " #call_func". Asm_code error: %s\n",                            \

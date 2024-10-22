@@ -16,7 +16,7 @@ const char* asm_code_strerror(const enum AsmCodeError error);
 
 #define ASM_CODE_ERROR_HANDLE(call_func, ...)                                                          \
     do {                                                                                            \
-        asm_code_error_handler = call_func;                                                            \
+        const enum AsmCodeError asm_code_error_handler = call_func;                                 \
         if (asm_code_error_handler)                                                                    \
         {                                                                                           \
             fprintf(stderr, "Can't " #call_func". Asm_code error: %s\n",                               \

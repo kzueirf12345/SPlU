@@ -17,7 +17,7 @@ const char* labels_strerror(const enum LabelsError error);
 
 #define LABELS_ERROR_HANDLE(call_func, ...)                                                          \
     do {                                                                                            \
-        labels_error_handler = call_func;                                                            \
+        const enum LabelsError labels_error_handler = call_func;                                                            \
         if (labels_error_handler)                                                                    \
         {                                                                                           \
             fprintf(stderr, "Can't " #call_func". Labels error: %s\n",                               \
@@ -31,7 +31,6 @@ const char* labels_strerror(const enum LabelsError error);
 typedef struct Label
 {
     char* name;
-    size_t name_size;
     size_t addr;
 } label_t;
 
@@ -42,8 +41,7 @@ typedef struct Labels
     size_t count;
 } labels_t;
 
-enum LabelsError labels_ctor(labels_t* const labels, const size_t count_label_names, 
-                             const size_t label_name_size);
+enum LabelsError labels_ctor(labels_t* const labels, const size_t count_label_names);
 void labels_dtor(labels_t* const labels);
 
 void labels_push(labels_t* const labels, label_t label);

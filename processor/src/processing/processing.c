@@ -34,8 +34,6 @@ enum ProcessorError processor_ctor(processor_t* const processor, const char* con
     lassert(processor, "");
     lassert(input_filename, "");
 
-    enum ProcessorError processor_error_handler = PROCESSOR_ERROR_SUCCESS;
-
     FILE* input_file = fopen(input_filename, "rb");
     if (!input_file)
     {
@@ -477,7 +475,7 @@ static operand_t* get_operand_addr_(cmnd_t cmnd, processor_t* const processor)
 
     operand_t* operand_addr = NULL;
 
-    if (cmnd.imm & cmnd.reg)
+    if (cmnd.imm && cmnd.reg)
     {
         operand_t imm_num = 0;
         memcpy(&imm_num, processor->instructs + processor->ip, sizeof(imm_num));
