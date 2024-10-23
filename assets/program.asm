@@ -16,7 +16,7 @@ HLT
 :factorial
 PUSH R2
 PUSH 1
-JE :ret_factorial
+JLE :ret_factorial
 
 PUSH R1
 PUSH R2

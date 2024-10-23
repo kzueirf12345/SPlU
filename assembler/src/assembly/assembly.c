@@ -249,6 +249,7 @@ enum AsmError assembly(const asm_code_t asm_code, instructs_t* const instructs)
 
             case OPCODE_UNKNOWN:
             {
+                fprintf(stderr, "str: '%s'\n", cmnd_str);
                 fprintf(stderr, "Incorrect command in %zu line\n", ip + 1);
                 fixup_dtor(&fixup);
                 labels_dtor(&labels);

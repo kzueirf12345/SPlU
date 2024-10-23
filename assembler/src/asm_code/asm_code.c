@@ -2,6 +2,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <sys/mman.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #include "asm_code.h"
 #include "utils.h"
@@ -24,8 +29,8 @@ const char* asm_code_strerror(const enum AsmCodeError error)
 
 static enum AsmCodeError fill_asm_code_string_count_and_split_ (asm_code_t* const asm_code);
 static enum AsmCodeError fill_asm_code_string_ptrs_            (asm_code_t* const asm_code);
-static enum AsmCodeError fill_asm_code_size_ (asm_code_t* const asm_code, FILE** const input_file);
-static enum AsmCodeError fill_asm_code_data_ (asm_code_t* const asm_code, FILE** const input_file);
+static enum AsmCodeError fill_asm_code_ (const char* const input_filename, 
+                                         asm_code_t* const asm_code);
 
 
 enum AsmCodeError asm_code_ctor(const char* const input_filename, asm_code_t* const asm_code)
@@ -33,84 +38,63 @@ enum AsmCodeError asm_code_ctor(const char* const input_filename, asm_code_t* co
     lassert(input_filename, "");
     lassert(asm_code, "");
 
-    FILE* input_file = fopen(input_filename, "rb");
-    if (!input_file)
-    {
-        perror("Can't fopen input file");
-        return ASM_CODE_ERROR_FAILURE;
-    }
-    setbuf(input_file, NULL); // TODO mmap
+    ASM_CODE_ERROR_HANDLE(fill_asm_code_(input_filename, asm_code));
 
-    ASM_CODE_ERROR_HANDLE(fill_asm_code_size_(asm_code, &input_file));
-    ASM_CODE_ERROR_HANDLE(fill_asm_code_data_(asm_code, &input_file), 
-                          free(asm_code->code); IF_DEBUG(asm_code->code = NULL););
-
-    if (fclose(input_file))
-    {
-        perror("Can't fclose input file");
-        return ASM_CODE_ERROR_FAILURE;
-    }
-    IF_DEBUG(input_file = NULL;)
-
-    ASM_CODE_ERROR_HANDLE(fill_asm_code_string_count_and_split_(asm_code),
-                          free(asm_code->code); IF_DEBUG(asm_code->code = NULL;));
-
+    ASM_CODE_ERROR_HANDLE(fill_asm_code_string_count_and_split_(asm_code));
     ASM_CODE_ERROR_HANDLE(fill_asm_code_string_ptrs_           (asm_code),
-                          free(asm_code->code);   IF_DEBUG(asm_code->code   = NULL;)
                           free(asm_code->comnds); IF_DEBUG(asm_code->comnds = NULL;));
 
     return ASM_CODE_ERROR_SUCCESS;
 }
 
-static enum AsmCodeError fill_asm_code_size_(asm_code_t* const asm_code, FILE** const input_file) 
+static enum AsmCodeError fill_asm_code_size_ (asm_code_t* const asm_code, const int fd);
+
+static enum AsmCodeError fill_asm_code_ (const char* const input_filename, 
+                                         asm_code_t* const asm_code)
 {
-    lassert(asm_code, "");
-    lassert(input_file, "");
-    lassert(*input_file, "");
-
-    if (fseek(*input_file, 0, SEEK_END))
+    int fd = open(input_filename, O_RDWR);
+    if (fd == -1)
     {
-        perror("Can't fseek to end input file");
+        perror("Can't fopen input file");
         return ASM_CODE_ERROR_FAILURE;
     }
 
-    long code_size = 0;
-    if ((code_size = ftell(*input_file)) < 0)
+    ASM_CODE_ERROR_HANDLE(fill_asm_code_size_(asm_code, fd));
+
+    asm_code->code = mmap(NULL, asm_code->code_size, PROT_WRITE | PROT_READ, MAP_PRIVATE, fd, 0);
+
+    if (asm_code->code == MAP_FAILED)
     {
-        perror("Can't ftell input_file");
+        perror("Can't mmap");
         return ASM_CODE_ERROR_FAILURE;
     }
-    asm_code->code_size = (size_t)code_size + 1;
 
-
-    if (fseek(*input_file, 0, SEEK_SET))
+    if (close(fd))
     {
-        perror("Can't fseek to start input file");
+        perror("Can't fclose input file");
         return ASM_CODE_ERROR_FAILURE;
     }
+    IF_DEBUG(fd = -1;)
+
+    asm_code->code[asm_code->code_size - 1] = '\0';
 
     return ASM_CODE_ERROR_SUCCESS;
 }
 
-enum AsmCodeError fill_asm_code_data_(asm_code_t* const asm_code, FILE** const input_file)
+static enum AsmCodeError fill_asm_code_size_ (asm_code_t* const asm_code, const int fd)
 {
-    lassert(input_file, "");
-    lassert(*input_file, "");
     lassert(asm_code, "");
-    lassert(asm_code->code_size, "");
+    lassert(fd != -1, "");
 
-    asm_code->code = (char*)calloc(asm_code->code_size, sizeof(*asm_code->code));
-    if (!asm_code->code)
+    struct stat fd_stat = {};
+
+    if (fstat(fd, &fd_stat))
     {
-        perror("Can't calloc memory for asm_code->code");
+        perror("Can't fstat");
         return ASM_CODE_ERROR_FAILURE;
     }
 
-    if (fread(asm_code->code, 1, asm_code->code_size - 1, *input_file) != (asm_code->code_size - 1))
-    {
-        perror("Can't fread into input file");
-        return ASM_CODE_ERROR_FAILURE;
-    }
+    asm_code->code_size = (size_t)fd_stat.st_size + 1;
 
     return ASM_CODE_ERROR_SUCCESS;
 }
@@ -122,10 +106,12 @@ static enum AsmCodeError fill_asm_code_string_count_and_split_(asm_code_t* const
     lassert(asm_code->code, "");
 
     asm_code->comnds_size = 1;
-    for (size_t ind = 0; ind < asm_code->code_size; ++ind)
+    const char* code_ptr = asm_code->code + 1;
+
+    while ((code_ptr = strchr(code_ptr, '\n')))
     {
-        if (asm_code->code[ind] == '\n')
-          ++asm_code->comnds_size;
+        ++asm_code->comnds_size;
+        ++code_ptr;
     }
 
     return ASM_CODE_ERROR_SUCCESS;
@@ -154,7 +140,7 @@ static enum AsmCodeError fill_asm_code_string_ptrs_(asm_code_t* const asm_code)
     char** string_ptr = asm_code->comnds + 1;
 
     while ((finded_symbol_ptr = strpbrk(finded_symbol_ptr, SOUGHTABLE_SYMBOLS)) 
-         && (size_t)(finded_symbol_ptr - asm_code->code + 1) != asm_code->code_size)
+         && (size_t)(finded_symbol_ptr - asm_code->code + 1) < asm_code->code_size)
     {
         lassert(finded_symbol_ptr >= asm_code->code, "");
         
@@ -176,7 +162,7 @@ void asm_code_dtor(asm_code_t* asm_code)
 {
     lassert(asm_code, "");
 
-    free(asm_code->code);   IF_DEBUG(asm_code->code    = NULL;)
+    // free(asm_code->code);   IF_DEBUG(asm_code->code    = NULL;)
     free(asm_code->comnds); IF_DEBUG(asm_code->comnds  = NULL;)
 
     IF_DEBUG(asm_code->code_size   = 0;)
