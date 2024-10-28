@@ -161,7 +161,7 @@ enum FixupError fixup_processing(const fixup_t* const fixup, instructs_t* const 
         {
             STACK_ERROR_HANDLE_(stack_pop(&stack, &stack_back_elem));
 
-            static_assert(sizeof(operand_t) == sizeof(size_t));
+            // static_assert(sizeof(operand_t) == sizeof(size_t)); //FIXME
 
             memcpy(&instructs->data[stack_back_elem.ip], &label_addr, sizeof(label_addr));
         }

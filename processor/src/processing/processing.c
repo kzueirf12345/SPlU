@@ -54,14 +54,20 @@ enum ProcessorError processor_ctor(processor_t* const processor, const char* con
 
     processor->ip = 0;
 
-    processor->memory = calloc(MEMORY_SIZE_, sizeof(*processor->memory));
+    processor->memory = calloc(MEMORY_SIZE, sizeof(*processor->memory));
     if (!processor->memory)
     {
         perror("Can't calloc processor->memory");
         return PROCESSOR_ERROR_STANDARD_ERRNO;
     }
+    if (!memset(processor->memory, NVALID_OUTPUT_CHAR_VAL, 
+                MEMORY_SIZE * sizeof(*processor->memory)))
+    {
+        perror("Can't memset '.' processor->memory");
+        return PROCESSOR_ERROR_STANDARD_ERRNO;
+    }
 
-    processor->regs = calloc(REGS_SIZE_, sizeof(*processor->regs));
+    processor->regs = calloc(REGS_SIZE, sizeof(*processor->regs));
     if (!processor->regs)
     {
         perror("Can't calloc processor->regs");
@@ -139,9 +145,10 @@ static enum ProcessorError fill_processor_data_(processor_t* const processor, FI
 }
 
 
-static void lassert_processor_init_(const processor_t* const processor);
-static operand_t* get_operand_addr_(cmnd_t cmnd, processor_t* const processor);
-static void jmp_condition_handle_(const bool condition, processor_t* const processor);
+static void       lassert_processor_init_(                const processor_t* const processor);
+static operand_t* get_operand_addr_      (cmnd_t cmnd,          processor_t* const processor);
+static void       jmp_condition_handle_  (const bool condition, processor_t* const processor);
+static enum ProcessorError draw_  (processor_t processor);
 
 #define STACK_ERROR_HANDLE_(call_func, ...)                                                         \
     do {                                                                                            \
@@ -427,6 +434,15 @@ enum ProcessorError processing(processor_t* const processor)
 
             //-----------------------------
 
+            case OPCODE_DRAW:
+            {
+                PROCESSOR_ERROR_HANDLE(draw_(*processor), 
+                                       stack_dtor(&stack); stack_dtor(&stack_ret););
+                break;
+            }
+
+            //-----------------------------
+
             case OPCODE_HLT:
             {
 #ifndef NDEBUG
@@ -482,7 +498,7 @@ static operand_t* get_operand_addr_(cmnd_t cmnd, processor_t* const processor)
         processor->ip += sizeof(operand_t);
 
         operand_t reg_num = 0;
-        lassert(processor->instructs[processor->ip] < REGS_SIZE_, "Register overflow");
+        lassert(processor->instructs[processor->ip] < REGS_SIZE, "Register overflow");
         memcpy(&reg_num, processor->regs + processor->instructs[processor->ip], sizeof(reg_num));
         processor->ip += sizeof(operand_t);
 
@@ -497,7 +513,7 @@ static operand_t* get_operand_addr_(cmnd_t cmnd, processor_t* const processor)
     }
     else if (cmnd.reg)
     {
-        lassert(processor->instructs[processor->ip] < REGS_SIZE_, "Register overflow");
+        lassert(processor->instructs[processor->ip] < REGS_SIZE, "Register overflow");
         operand_addr = processor->regs + processor->instructs[processor->ip];
         processor->ip += sizeof(operand_t);
     }
@@ -513,7 +529,7 @@ static operand_t* get_operand_addr_(cmnd_t cmnd, processor_t* const processor)
 
         operand_t temp = 0;
         memcpy(&temp, operand_addr, sizeof(*operand_addr));
-        lassert((size_t)temp < MEMORY_SIZE_, "Memory overflow");
+        lassert((size_t)temp < MEMORY_SIZE, "Memory overflow");
         operand_addr = processor->memory + temp;
     }
 
@@ -534,4 +550,55 @@ static void jmp_condition_handle_(const bool condition, processor_t* const proce
     {
         processor->ip += sizeof(operand_t);
     }
+}
+
+static enum ProcessorError draw_ (processor_t processor)
+{
+    lassert(processor.memory, "");
+    static_assert(MEMORY_HEIGHT * MEMORY_WIDTH <= MEMORY_SIZE);
+
+    if (putc('\n', stdout) != '\n')
+    {
+        perror("Can't putc \\n");
+        return PROCESSOR_ERROR_STANDARD_ERRNO;
+    }
+
+    for (size_t row = 0; row < MEMORY_HEIGHT; ++row)
+    {
+        for (size_t col = 0; col < MEMORY_WIDTH; ++col)
+        {
+            const char out_sym = *((char*)processor.memory + row * MEMORY_WIDTH + col);
+
+            if (MIN_VALID_OUTPUT_CHAR <= out_sym && out_sym <= MAX_VALID_OUTPUT_CHAR)
+            {
+                if (putc(out_sym, stdout) != out_sym)
+                {
+                    perror("Can't putc out_sym");
+                    return PROCESSOR_ERROR_STANDARD_ERRNO;
+                }
+            }
+            else
+            {
+                if (putc(NVALID_OUTPUT_CHAR_VAL, stdout) != NVALID_OUTPUT_CHAR_VAL)
+                {
+                    perror("Can't putc nvalid char val");
+                    return PROCESSOR_ERROR_STANDARD_ERRNO;
+                }
+            }
+        }
+
+        if (putc('\n', stdout) != '\n')
+        {
+            perror("Can't putc \\n");
+            return PROCESSOR_ERROR_STANDARD_ERRNO;
+        }
+    }
+
+    if (putc('\n', stdout) != '\n')
+    {
+        perror("Can't putc \\n");
+        return PROCESSOR_ERROR_STANDARD_ERRNO;
+    }
+
+    return PROCESSOR_ERROR_SUCCESS;
 }

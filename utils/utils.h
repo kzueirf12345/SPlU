@@ -47,9 +47,11 @@ enum Opcode
     OPCODE_CALL     = 17,
     OPCODE_RET      = 18,
 
-    OPCODE_HLT      = 19,
+    OPCODE_DRAW     = 19,
 
-    OPCODE_UNKNOWN  = 20
+    OPCODE_HLT      = 20,
+
+    OPCODE_UNKNOWN  = 21
 };
 static_assert(OPCODE_UNKNOWN < (1 << MAX_OPCODE_BITS));
 
@@ -62,11 +64,18 @@ typedef struct Cmnd
 } cmnd_t;
 static_assert(sizeof(cmnd_t) == 1);
 
-typedef int64_t operand_t;
-#define INOUT_OPERAND_CODE "%ld"
+typedef uint64_t operand_t;
+#define INOUT_OPERAND_CODE "%lu"
 
-static const size_t REGS_SIZE_    = 9;
-static const size_t MEMORY_SIZE_ = 2048;
+static const size_t REGS_SIZE    = 9;
+
+static const size_t MEMORY_HEIGHT = 30;
+static const size_t MEMORY_WIDTH  = 60;
+static const size_t MEMORY_SIZE = MEMORY_HEIGHT * MEMORY_WIDTH;
+
+static const char MIN_VALID_OUTPUT_CHAR  = 34;
+static const char MAX_VALID_OUTPUT_CHAR  = 126;
+static const char NVALID_OUTPUT_CHAR_VAL = '.'; 
 
 #endif /*SPLU_UTILS_H*/
 

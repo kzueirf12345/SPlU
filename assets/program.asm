@@ -10,6 +10,10 @@ POP R1
 CALL :factorial
 PUSH R1
 OUT
+
+PUSH 13454321
+POP [0]
+DRAW
 HLT
 
 
