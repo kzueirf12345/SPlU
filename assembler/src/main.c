@@ -30,8 +30,8 @@ int main()
                           logger_dtor(); asm_code_dtor(&asm_code););
 
     instructs_t instructs = {};
-    INSTRUCTS_ERROR_HANDLE(instructs_ctor(&instructs, asm_code.comnds_size * 3 * sizeof(operand_t)),
-                           logger_dtor(); instructs_dtor(&instructs);); //TODO count size and dynamic array
+    INSTRUCTS_ERROR_HANDLE(instructs_ctor(&instructs, asm_code.comnds_size),
+                           logger_dtor(); instructs_dtor(&instructs););
 
     ASM_ERROR_HANDLE(assembly(asm_code, &instructs),
                      logger_dtor(); asm_code_dtor(&asm_code); instructs_dtor(&instructs););

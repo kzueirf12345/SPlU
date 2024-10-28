@@ -4,6 +4,7 @@
 #include <stdio.h>
 
 #include "stack_on_array/libstack.h"
+#include "../instructions/instructions.h"
 #include "labels.h"
 
 enum FixupError
@@ -34,7 +35,7 @@ const char* fixup_strerror(const enum FixupError error);
 typedef struct LabelCall
 {
     char* name;
-    uint8_t* ip;
+    size_t ip;
 } label_call_t;
 
 typedef struct Fixup
@@ -47,7 +48,8 @@ enum FixupError fixup_ctor(fixup_t* const fixup, const size_t count_label_names)
 void            fixup_dtor(fixup_t* const fixup);
 
 enum FixupError fixup_push      (fixup_t* const fixup, label_call_t label_call);
-enum FixupError fixup_processing(const fixup_t* const fixup, const labels_t labels);
+enum FixupError fixup_processing(const fixup_t* const fixup, instructs_t* const instructs, 
+                                 const labels_t labels);
 
 
 

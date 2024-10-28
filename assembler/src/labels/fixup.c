@@ -4,6 +4,7 @@
 #include "fixup.h"
 #include "stack_on_array/libstack.h"
 #include "logger/liblogger.h"
+#include "../instructions/instructions.h"
 #include "utils.h"
 
 #define CASE_ENUM_TO_STRING_(error) case error: return #error
@@ -125,13 +126,17 @@ stack_key_t* fixup_find_(fixup_t* const fixup, const char* const label_name)
 }
 
 
-enum FixupError fixup_processing(const fixup_t* const fixup, const labels_t labels)
+enum FixupError fixup_processing(const fixup_t* const fixup, instructs_t* const instructs, 
+                                 const labels_t labels)
 {
     lassert(fixup, "");
     lassert(fixup->label_calls, "");
     lassert(fixup->size, "");
     lassert(labels.labels, "");
     lassert(labels.size, "");
+    lassert(instructs, "");
+    lassert(instructs->data, "");
+    lassert(instructs->size, "");
 
     for (size_t stack_ind = 0; 
          stack_ind < fixup->size && !stack_is_empty(fixup->label_calls[stack_ind]); 
@@ -158,7 +163,7 @@ enum FixupError fixup_processing(const fixup_t* const fixup, const labels_t labe
 
             static_assert(sizeof(operand_t) == sizeof(size_t));
 
-            memcpy(stack_back_elem.ip, &label_addr, sizeof(label_addr));
+            memcpy(&instructs->data[stack_back_elem.ip], &label_addr, sizeof(label_addr));
         }
     }
 

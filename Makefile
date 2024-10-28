@@ -1,10 +1,17 @@
-.PHONY: all clean
+.PHONY: all build start clean clean_all rebuild\
+		assembler_all assembler_build assembler_clean assembler_rebuild assembler_start \
+		processor_all processor_build processor_clean processor_rebuild processor_start \
+		libs_build libs_clean libs_rebuild \
+
 
 PROJECT_NAME = SPlU
 
 COMPILER = gcc
 
-DEBUG_ = 1
+
+DEBUG_ ?= 1
+
+ifeq ($(origin FLAGS), undefined)
 
 FLAGS =	-Wall -Wextra -Waggressive-loop-optimizations \
 		-Wmissing-declarations -Wcast-align -Wcast-qual -Wchar-subscripts \
@@ -26,8 +33,16 @@ SANITIZER = -fsanitize=address,alignment,bool,bounds,enum,float-cast-overflow,fl
 
 DEBUG_FLAGS = -D _DEBUG  -ggdb -Og -g3 -D_FORTIFY_SOURCES=3 $(SANITIZER)
 RELEASE_FLAGS = -DNDEBUG -O2
-FLAGS += $(if $(DEBUG_),$(DEBUG_FLAGS),$(RELEASE_FLAGS))
-ADD_FLAGS = #FIXME
+
+ifneq ($(DEBUG_),0)
+FLAGS += $(DEBUG_FLAGS)
+else
+FLAGS += $(RELEASE_FLAGS)
+endif
+
+endif
+
+FLAGS += $(ADD_FLAGS)
 
 
 all: assembler_all processor_all
@@ -36,16 +51,18 @@ build: assembler_build processor_build
 
 start: assembler_start processor_start
 
+rebuild: libs_rebuild assembler_rebuild processor_rebuild
+
 
 assembler_all: assembler_build assembler_start
 
 assembler_start:
-	make ADD_FLAGS="$(ADD_FLAGS)" start -C ./assembler/
+	@make ADD_FLAGS="$(ADD_FLAGS)" FLAGS="$(FLAGS)" DEBUG_=$(DEBUG_) start -C ./assembler/
 
 assembler_rebuild: assembler_clean assembler_build
 
 assembler_build:
-	make ADD_FLAGS="$(ADD_FLAGS)" build -C ./assembler/
+	@make ADD_FLAGS="$(ADD_FLAGS)" FLAGS="$(FLAGS)" DEBUG_=$(DEBUG_) build -C ./assembler/
 
 assembler_clean:
 	make ADD_FLAGS="$(ADD_FLAGS)" clean -C ./assembler/
@@ -54,12 +71,12 @@ assembler_clean:
 processor_all: processor_build processor_start
 
 processor_start:
-	make ADD_FLAGS="$(ADD_FLAGS)" start -C ./processor/
+	@make ADD_FLAGS="$(ADD_FLAGS)" FLAGS="$(FLAGS)" DEBUG_=$(DEBUG_) start -C ./processor/
 
 processor_rebuild: processor_clean processor_build
 
 processor_build:
-	make ADD_FLAGS="$(ADD_FLAGS)" build -C ./processor/
+	@make ADD_FLAGS="$(ADD_FLAGS)" FLAGS="$(FLAGS)" DEBUG_=$(DEBUG_) build -C ./processor/
 
 processor_clean:
 	make ADD_FLAGS="$(ADD_FLAGS)" clean -C ./processor/
@@ -68,8 +85,8 @@ processor_clean:
 libs_rebuild: libs_clean libs_build
 
 libs_build:
-	make ADD_FLAGS="$(ADD_FLAGS)" build -C ./libs/stack_on_array/ && \
-	make ADD_FLAGS="$(ADD_FLAGS)" build -C ./libs/logger/
+	@make ADD_FLAGS="$(ADD_FLAGS)" FLAGS="$(FLAGS)" DEBUG_=$(DEBUG_) build -C ./libs/stack_on_array/ && \
+	 make ADD_FLAGS="$(ADD_FLAGS)" FLAGS="$(FLAGS)" DEBUG_=$(DEBUG_) build -C ./libs/logger/
 
 libs_clean:
 	make ADD_FLAGS="$(ADD_FLAGS)" clean -C ./libs/stack_on_array/ && \
@@ -77,8 +94,10 @@ libs_clean:
 
 
 
-clean: assembler_clean processor_clean
+clean: libs_clean assembler_clean processor_clean
 
 clean_all:
-	make ADD_FLAGS="$(ADD_FLAGS)" clean_all -C ./assembler/ && \
-	make ADD_FLAGS="$(ADD_FLAGS)" clean_all -C ./processor/
+	make ADD_FLAGS="$(ADD_FLAGS)" clean_all -C ./libs/logger         && \
+	make ADD_FLAGS="$(ADD_FLAGS)" clean_all -C ./libs/stack_on_array && \
+	make ADD_FLAGS="$(ADD_FLAGS)" clean_all -C ./assembler/          && \
+	make ADD_FLAGS="$(ADD_FLAGS)" clean_all -C ./processor/          

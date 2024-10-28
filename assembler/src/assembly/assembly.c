@@ -266,7 +266,7 @@ enum AsmError assembly(const asm_code_t asm_code, instructs_t* const instructs)
         }
         ++ip;
     }
-    FIXUP_ERROR_HANDLE_(fixup_processing(&fixup, labels), 
+    FIXUP_ERROR_HANDLE_(fixup_processing(&fixup, instructs, labels), 
                         fixup_dtor(&fixup); labels_dtor(&labels););
 
     fixup_dtor(&fixup);
@@ -444,7 +444,7 @@ static enum AsmError push_jmp_(enum Opcode opcode, char* operand_str,
         else
         {
             const label_call_t label_call = {.name = operand_str + 1,
-                                             .ip = instructs->data + instructs->counter};
+                                             .ip = instructs->counter};
 
             FIXUP_ERROR_HANDLE_(fixup_push(fixup, label_call));
 

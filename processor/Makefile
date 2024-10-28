@@ -1,4 +1,7 @@
-.PHONY: all clean
+.PHONY: all build clean logger_build logger_clean logger_rebuild \
+						 stack_build  stack_clean  stack_rebuild \
+		clean_all clean_log clean_out clean_obj clean_deps clean_txt clean_bin \
+
 
 PROJECT_NAME = processor
 
@@ -6,7 +9,9 @@ BUILD_DIR = ./build
 SRC_DIR = ./src
 COMPILER = gcc
 
-DEBUG_ = 1
+DEBUG_ ?= 1
+
+ifeq ($(origin FLAGS), undefined)
 
 FLAGS =	-Wall -Wextra -Waggressive-loop-optimizations \
 		-Wmissing-declarations -Wcast-align -Wcast-qual -Wchar-subscripts \
@@ -28,7 +33,17 @@ SANITIZER = -fsanitize=address,alignment,bool,bounds,enum,float-cast-overflow,fl
 
 DEBUG_FLAGS = -D _DEBUG  -ggdb -Og -g3 -D_FORTIFY_SOURCES=3 $(SANITIZER)
 RELEASE_FLAGS = -DNDEBUG -O2
-FLAGS += $(if $(DEBUG_),$(DEBUG_FLAGS),$(RELEASE_FLAGS))
+
+ifneq ($(DEBUG_),0)
+FLAGS += $(DEBUG_FLAGS)
+else
+FLAGS += $(RELEASE_FLAGS)
+endif
+
+endif
+
+FLAGS += $(ADD_FLAGS)
+
 
 DIRS = processing
 BUILD_DIRS = $(DIRS:%=$(BUILD_DIR)/%)
@@ -52,26 +67,37 @@ build: $(PROJECT_NAME).out
 $(PROJECT_NAME).out: $(OBJECTS_REL_PATH)
 	@$(COMPILER) $(FLAGS) -o $@ $^ -L../libs/stack_on_array -lstack -L../libs/logger -llogger
 
-$(BUILD_DIR)/%.o : $(SRC_DIR)/%.c | $(BUILD_DIRS) logger_build
+$(BUILD_DIR)/%.o : $(SRC_DIR)/%.c | ./$(BUILD_DIR)/ $(BUILD_DIRS) logger_build
 	@$(COMPILER) $(FLAGS) -I../utils -I../libs -c -MMD -MP $< -o $@
 
 -include $(DEPS_REL_PATH)
 
 $(BUILD_DIRS):
 	mkdir $@
+./$(BUILD_DIR)/:
+	mkdir $@
+
+
+stack_rebuild: stack_build stack_clean
+
+stack_build:
+	@make ADD_FLAGS="$(ADD_FLAGS)" FLAGS="$(FLAGS)" DEBUG_=$(DEBUG_) build -C ../libs/stack_on_array
+
+stack_clean:
+	make ADD_FLAGS="$(ADD_FLAGS)" clean -C ../libs/stack_on_array
 
 
 logger_rebuild: logger_build logger_clean
 
 logger_build:
-	make ADD_FLAGS="$(ADD_FLAGS)" build -C ../libs/logger
+	@make ADD_FLAGS="$(ADD_FLAGS)" FLAGS="$(FLAGS)" DEBUG_=$(DEBUG_) build -C ../libs/logger
 
 logger_clean:
 	make ADD_FLAGS="$(ADD_FLAGS)" clean -C ../libs/logger
 
 
 
-clean_all: clean_obj clean_deps clean_out logger_clean
+clean_all: clean_obj clean_deps clean_out stack_clean logger_clean
 
 clean: clean_obj clean_deps clean_out
 

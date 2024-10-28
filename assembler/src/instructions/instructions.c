@@ -46,18 +46,88 @@ void instructs_dtor(instructs_t* const instructs)
     IF_DEBUG(instructs->size = 0);
 }
 
-void instructs_push_back(instructs_t* const instructs, const void* const elem, 
+//============================
+
+static void* recalloc_(void* ptrmem, const size_t old_number, const size_t old_size,
+                                     const size_t     number, const size_t     size);
+
+static enum InstructsError instructs_resize_(instructs_t* instructs, const size_t add_size);
+
+enum InstructsError instructs_push_back(instructs_t* const instructs, const void* const elem, 
                          const size_t elem_size)
 {
     lassert(instructs, "");
     lassert(elem, "");
     lassert(elem_size, "");
-    // fprintf(stderr, "size: %zu", instructs->size);
-    lassert(instructs->counter + elem_size < instructs->size, "");
+
+    INSTRUCTS_ERROR_HANDLE(instructs_resize_(instructs, elem_size));
 
     memcpy(instructs->data + instructs->counter, elem, elem_size);
     instructs->counter += elem_size;
+
+    return INSTRUCTS_ERROR_SUCCESS;
 }
+
+static enum InstructsError instructs_resize_(instructs_t* instructs, const size_t add_size)
+{
+    lassert(instructs, "");
+
+    if (add_size == 0)
+        return INSTRUCTS_ERROR_SUCCESS;
+
+    size_t new_size = 0;
+    if (instructs->counter + add_size >= instructs->size)
+    {
+        new_size = MAX(instructs->size * 2, instructs->counter + add_size);
+    }
+
+    if (new_size)
+    {
+        lassert(new_size > instructs->size, "");
+
+        void* temp_data = recalloc_(instructs->data, 
+                                    instructs->size, sizeof(*instructs->data),
+                                           new_size, sizeof(*instructs->data));
+        if (!temp_data)
+        {
+            fprintf(stderr, "Can't recalloc_");
+            return INSTRUCTS_ERROR_FAILURE;
+        }
+        instructs->data = temp_data; IF_DEBUG(temp_data = NULL;)
+
+        instructs->size = new_size;
+    }
+
+    return INSTRUCTS_ERROR_SUCCESS;
+}
+
+static void* recalloc_(void* ptrmem, const size_t old_number, const size_t old_size,
+                                     const size_t     number, const size_t     size)
+{
+    lassert(ptrmem, "");
+    lassert(number, "");
+    lassert(size  , "");
+
+    if (number * size == old_number * old_size)
+        return ptrmem;
+
+    if (!(ptrmem = realloc(ptrmem, number * size)))
+    {
+        perror("Can't realloc in recalloc_");
+        return NULL;
+    }
+
+    if (number * size > old_number * old_size
+        && !memset((char*)ptrmem + old_number * old_size, 0, number * size - old_number * old_size))
+    {
+        perror("Can't memset in recalloc_");
+        return NULL;
+    }
+
+    return ptrmem;
+}
+
+//===============================
 
 enum InstructsError instructs_output(const char* const output_filename, instructs_t instructs)
 {
