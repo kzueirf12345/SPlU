@@ -30,29 +30,30 @@ enum Opcode
     OPCODE_SUB      = 4,
     OPCODE_MUL      = 5,
     OPCODE_DIV      = 6,
-    OPCODE_MOD     = 7,
+    OPCODE_MOD      = 7,
+    OPCODE_SQR      = 8,
 
-    OPCODE_OUT      = 8,
-    OPCODE_IN       = 9,
+    OPCODE_OUT      = 9,
+    OPCODE_IN       = 10,
 
-    OPCODE_JMP      = 10,
-    OPCODE_JL       = 11,
-    OPCODE_JLE      = 12,
-    OPCODE_JG       = 13,
-    OPCODE_JGE      = 14,
-    OPCODE_JE       = 15,
-    OPCODE_JNE      = 16,
+    OPCODE_JMP      = 11,
+    OPCODE_JL       = 12,
+    OPCODE_JLE      = 13,
+    OPCODE_JG       = 14,
+    OPCODE_JGE      = 15,
+    OPCODE_JE       = 16,
+    OPCODE_JNE      = 17,
 
-    OPCODE_LABEL    = 17,
+    OPCODE_LABEL    = 18,
 
-    OPCODE_CALL     = 18,
-    OPCODE_RET      = 19,
+    OPCODE_CALL     = 19,
+    OPCODE_RET      = 20,
 
-    OPCODE_DRAW     = 20,
+    OPCODE_DRAW     = 21,
 
-    OPCODE_HLT      = 21,
+    OPCODE_HLT      = 22,
 
-    OPCODE_UNKNOWN  = 22
+    OPCODE_UNKNOWN  = 23
 };
 static_assert(OPCODE_UNKNOWN < (1 << MAX_OPCODE_BITS));
 
@@ -65,8 +66,8 @@ typedef struct Cmnd
 } cmnd_t;
 static_assert(sizeof(cmnd_t) == 1);
 
-typedef uint64_t operand_t;
-#define INOUT_OPERAND_CODE "%lu"
+typedef int64_t operand_t;
+#define INOUT_OPERAND_CODE "%ld"
 
 static const size_t REGS_SIZE    = 9;
 

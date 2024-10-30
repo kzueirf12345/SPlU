@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <unistd.h>
+#include <math.h>
 
 #include "processing.h"
 #include "logger/liblogger.h"
@@ -297,6 +298,19 @@ enum ProcessorError processing(processor_t* const processor)
                 }
                 const operand_t mod = first_num % second_num;
                 STACK_ERROR_HANDLE_(stack_push(&stack, &mod), 
+                                    stack_dtor(&stack); stack_dtor(&stack_ret););
+                break;
+            }
+            case OPCODE_SQR:
+            {
+                lassert(stack_size(stack) >= 1, "");
+
+                operand_t num = 0;
+                STACK_ERROR_HANDLE_(stack_pop(&stack, &num),  
+                                    stack_dtor(&stack); stack_dtor(&stack_ret););
+
+                const operand_t sqr = (operand_t)sqrt((double)num);
+                STACK_ERROR_HANDLE_(stack_push(&stack, &sqr), 
                                     stack_dtor(&stack); stack_dtor(&stack_ret););
                 break;
             }

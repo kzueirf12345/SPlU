@@ -63,7 +63,7 @@ void labels_push(labels_t* const labels, label_t label)
     lassert(label.name, "");
     lassert(labels->count < labels->size, "");
 
-    labels->labels[labels->count].name = label.name;
+    labels->labels[labels->count].name = label.name; // TODO check count (not assert)
     labels->labels[labels->count].addr = label.addr;
     ++labels->count;
 }
