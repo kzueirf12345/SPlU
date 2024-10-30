@@ -278,6 +278,28 @@ enum ProcessorError processing(processor_t* const processor)
                                     stack_dtor(&stack); stack_dtor(&stack_ret););
                 break;
             }
+            case OPCODE_MOD:
+            {
+                lassert(stack_size(stack) >= 2, "");
+
+                operand_t first_num = 0, second_num = 0;
+                STACK_ERROR_HANDLE_(stack_pop(&stack, &second_num), 
+                                    stack_dtor(&stack); stack_dtor(&stack_ret););
+                STACK_ERROR_HANDLE_(stack_pop(&stack, &first_num),  
+                                    stack_dtor(&stack); stack_dtor(&stack_ret););
+
+                if (second_num == 0)
+                {
+                    fprintf(stderr, "Can't mod by zero\n");
+                    stack_dtor(&stack);
+                    stack_dtor(&stack_ret);
+                    return PROCESSOR_ERROR_DIV_BY_ZERO;
+                }
+                const operand_t mod = first_num % second_num;
+                STACK_ERROR_HANDLE_(stack_push(&stack, &mod), 
+                                    stack_dtor(&stack); stack_dtor(&stack_ret););
+                break;
+            }
 
             //-----------------------------
 
@@ -520,12 +542,12 @@ static operand_t* get_operand_addr_(cmnd_t cmnd, processor_t* const processor)
 
     if (cmnd.mem)
     {
-        const __useconds_t SLEEP_TIME_ = 500000;
-        if (usleep(SLEEP_TIME_) != 0)
-        {
-            fprintf(stderr, "Can't sleep :)\n");
-            return NULL;
-        }
+        // const __useconds_t SLEEP_TIME_ = 5000;
+        // if (usleep(SLEEP_TIME_) != 0)
+        // {
+        //     fprintf(stderr, "Can't sleep :)\n");
+        //     return NULL;
+        // }
 
         operand_t temp = 0;
         memcpy(&temp, operand_addr, sizeof(*operand_addr));
@@ -567,7 +589,7 @@ static enum ProcessorError draw_ (processor_t processor)
     {
         for (size_t col = 0; col < MEMORY_WIDTH; ++col)
         {
-            const char out_sym = *((char*)processor.memory + row * MEMORY_WIDTH + col);
+            const char out_sym = *(char*)(processor.memory + row * MEMORY_WIDTH + col);
 
             if (MIN_VALID_OUTPUT_CHAR <= out_sym && out_sym <= MAX_VALID_OUTPUT_CHAR)
             {

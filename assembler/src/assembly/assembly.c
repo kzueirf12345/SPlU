@@ -139,6 +139,12 @@ enum AsmError assembly(const asm_code_t asm_code, instructs_t* const instructs)
                 instructs_push_back(instructs, &cmnd, 1);
                 break;
             }
+            case OPCODE_MOD:
+            {
+                cmnd_t cmnd = {.imm = 0, .reg = 0, .mem = 0, .opcode = comnd_code };
+                instructs_push_back(instructs, &cmnd, 1);
+                break;
+            }
 
             //--------------------------------
 
@@ -290,7 +296,9 @@ static enum Opcode comnd_str_to_enum_(const char* const cmnd_str)
 {
     lassert(cmnd_str, "");
 
-    if (strcmp(cmnd_str, "") == 0 || cmnd_str[0] == '#') return OPCODE_ZERO;
+    static const char COMMENT_SYMBOL = ';';
+
+    if (strcmp(cmnd_str, "") == 0 || cmnd_str[0] == COMMENT_SYMBOL) return OPCODE_ZERO;
 
     if (strcmp(cmnd_str, "PUSH") == 0)                   return OPCODE_PUSH;
     if (strcmp(cmnd_str, "POP")  == 0)                   return OPCODE_POP;
@@ -299,6 +307,7 @@ static enum Opcode comnd_str_to_enum_(const char* const cmnd_str)
     if (strcmp(cmnd_str, "SUB")  == 0)                   return OPCODE_SUB;
     if (strcmp(cmnd_str, "MUL")  == 0)                   return OPCODE_MUL;
     if (strcmp(cmnd_str, "DIV")  == 0)                   return OPCODE_DIV;
+    if (strcmp(cmnd_str, "MOD")  == 0)                   return OPCODE_MOD;
 
     if (strcmp(cmnd_str, "OUT")  == 0)                   return OPCODE_OUT;
     if (strcmp(cmnd_str, "IN")   == 0)                   return OPCODE_IN;

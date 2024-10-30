@@ -30,28 +30,29 @@ enum Opcode
     OPCODE_SUB      = 4,
     OPCODE_MUL      = 5,
     OPCODE_DIV      = 6,
+    OPCODE_MOD     = 7,
 
-    OPCODE_OUT      = 7,
-    OPCODE_IN       = 8,
+    OPCODE_OUT      = 8,
+    OPCODE_IN       = 9,
 
-    OPCODE_JMP      = 9,
-    OPCODE_JL       = 10,
-    OPCODE_JLE      = 11,
-    OPCODE_JG       = 12,
-    OPCODE_JGE      = 13,
-    OPCODE_JE       = 14,
-    OPCODE_JNE      = 15,
+    OPCODE_JMP      = 10,
+    OPCODE_JL       = 11,
+    OPCODE_JLE      = 12,
+    OPCODE_JG       = 13,
+    OPCODE_JGE      = 14,
+    OPCODE_JE       = 15,
+    OPCODE_JNE      = 16,
 
-    OPCODE_LABEL    = 16,
+    OPCODE_LABEL    = 17,
 
-    OPCODE_CALL     = 17,
-    OPCODE_RET      = 18,
+    OPCODE_CALL     = 18,
+    OPCODE_RET      = 19,
 
-    OPCODE_DRAW     = 19,
+    OPCODE_DRAW     = 20,
 
-    OPCODE_HLT      = 20,
+    OPCODE_HLT      = 21,
 
-    OPCODE_UNKNOWN  = 21
+    OPCODE_UNKNOWN  = 22
 };
 static_assert(OPCODE_UNKNOWN < (1 << MAX_OPCODE_BITS));
 

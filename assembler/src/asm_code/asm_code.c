@@ -144,14 +144,18 @@ static enum AsmCodeError fill_asm_code_string_ptrs_(asm_code_t* const asm_code)
     {
         lassert(finded_symbol_ptr >= asm_code->code, "");
         
-        if (*finded_symbol_ptr == '\n')
-        {
-            *string_ptr = finded_symbol_ptr + 1; 
-            ++string_ptr;
-        }
+        const char temp_symbol = *finded_symbol_ptr;
 
         *finded_symbol_ptr = '\0';
         ++finded_symbol_ptr;
+
+        if (temp_symbol == '\n')
+        {
+            for(; *finded_symbol_ptr == ' ' || *finded_symbol_ptr == '\t'; ++finded_symbol_ptr);
+
+            *string_ptr = finded_symbol_ptr; 
+            ++string_ptr;
+        }
     }
 
     return ASM_CODE_ERROR_SUCCESS;

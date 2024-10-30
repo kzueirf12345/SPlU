@@ -31,7 +31,7 @@ SANITIZER = -fsanitize=address,alignment,bool,bounds,enum,float-cast-overflow,fl
 		integer-divide-by-zero,leak,nonnull-attribute,null,object-size,return,returns-nonnull-attribute,$\
 		shift,signed-integer-overflow,undefined,unreachable,vla-bound,vptr
 
-DEBUG_FLAGS = -D _DEBUG  -ggdb -Og -g3 -D_FORTIFY_SOURCES=3 $(SANITIZER)
+DEBUG_FLAGS = -D _DEBUG  -ggdb -Og -g3 -D_FORTIFY_SOURCES=3 $(SANITIZER) -D HASH_PROTECT
 RELEASE_FLAGS = -DNDEBUG -O2
 
 ifneq ($(DEBUG_),0)

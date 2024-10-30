@@ -53,10 +53,11 @@ dkms.conf
 
 
 .vscode
-.DS_Store
 .cache
 
 *.log
 CMakePresets.json
+
+*.bin
 
 doxygen
