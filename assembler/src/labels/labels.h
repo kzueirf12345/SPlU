@@ -44,7 +44,7 @@ typedef struct Labels
 enum LabelsError labels_ctor(labels_t* const labels, const size_t count_label_names);
 void labels_dtor(labels_t* const labels);
 
-void labels_push(labels_t* const labels, label_t label);
+enum LabelsError labels_push(labels_t* const labels, label_t label);
 
 label_t* labels_find(const labels_t labels, const char* const name);
 

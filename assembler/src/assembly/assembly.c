@@ -74,7 +74,7 @@ enum AsmError assembly(const asm_code_t asm_code, instructs_t* const instructs)
     const size_t LABELS_SIZE = 2048;
 
     labels_t labels = {};
-    LABELS_ERROR_HANDLE_(labels_ctor(&labels, LABELS_SIZE), 
+    LABELS_ERROR_HANDLE_(labels_ctor(&labels, 1), 
                          labels_dtor(&labels););
 
     fixup_t fixup = {};
@@ -116,46 +116,20 @@ enum AsmError assembly(const asm_code_t asm_code, instructs_t* const instructs)
             //--------------------------------
 
             case OPCODE_ADD:
-            {
-                cmnd_t cmnd = {.imm = 0, .reg = 0, .mem = 0, .opcode = comnd_code };
-                instructs_push_back(instructs, &cmnd, 1);
-                break;
-            }
             case OPCODE_SUB:
-            {
-                cmnd_t cmnd = {.imm = 0, .reg = 0, .mem = 0, .opcode = comnd_code};
-                instructs_push_back(instructs, &cmnd, 1);
-                break;
-            }
             case OPCODE_MUL:
-            {
-                cmnd_t cmnd = {.imm = 0, .reg = 0, .mem = 0, .opcode = comnd_code };
-                instructs_push_back(instructs, &cmnd, 1);
-                break;
-            }
             case OPCODE_DIV:
-            {
-                cmnd_t cmnd = {.imm = 0, .reg = 0, .mem = 0, .opcode = comnd_code };
-                instructs_push_back(instructs, &cmnd, 1);
-                break;
-            }
             case OPCODE_MOD:
-            {
-                cmnd_t cmnd = {.imm = 0, .reg = 0, .mem = 0, .opcode = comnd_code };
-                instructs_push_back(instructs, &cmnd, 1);
-                break;
-            }
             case OPCODE_SQR:
-            {
-                cmnd_t cmnd = {.imm = 0, .reg = 0, .mem = 0, .opcode = comnd_code };
-                instructs_push_back(instructs, &cmnd, 1);
-                break;
-            }
 
-            //--------------------------------
-
-            case OPCODE_OUT: // TODO
+            case OPCODE_OUT:
             case OPCODE_IN:
+
+            case OPCODE_RET:
+
+            case OPCODE_DRAW:
+
+            case OPCODE_HLT:
             {
                 cmnd_t cmnd = {.imm = 0, .reg = 0, .mem = 0, .opcode = comnd_code };
                 instructs_push_back(instructs, &cmnd, 1);
@@ -165,52 +139,16 @@ enum AsmError assembly(const asm_code_t asm_code, instructs_t* const instructs)
             //--------------------------------
 
             case OPCODE_JMP:
+            case OPCODE_JL:
+            case OPCODE_JLE:
+            case OPCODE_JG:
+            case OPCODE_JGE:
+            case OPCODE_JE:
+            case OPCODE_JNE:
             {
 
                 char* const operand_str = strchr(cmnd_str, '\0') + 1;
                 ASM_ERROR_HANDLE_(push_jmp_(comnd_code, operand_str, instructs, labels, &fixup), 
-                                  fixup_dtor(&fixup); labels_dtor(&labels););
-                break;
-            }
-            case OPCODE_JL:
-            {
-                char* const operand_str = strchr(cmnd_str, '\0') + 1;
-                ASM_ERROR_HANDLE_(push_jmp_(comnd_code, operand_str, instructs, labels, &fixup),
-                                  fixup_dtor(&fixup); labels_dtor(&labels););
-                break;
-            }
-            case OPCODE_JLE:
-            {
-                char* const operand_str = strchr(cmnd_str, '\0') + 1;
-                ASM_ERROR_HANDLE_(push_jmp_(comnd_code, operand_str, instructs, labels, &fixup),
-                                  fixup_dtor(&fixup); labels_dtor(&labels););
-                break;
-            }
-            case OPCODE_JG:
-            {
-                char* const operand_str = strchr(cmnd_str, '\0') + 1;
-                ASM_ERROR_HANDLE_(push_jmp_(comnd_code, operand_str, instructs, labels, &fixup),
-                                  fixup_dtor(&fixup); labels_dtor(&labels););
-                break;
-            }
-            case OPCODE_JGE:
-            {
-                char* const operand_str = strchr(cmnd_str, '\0') + 1;
-                ASM_ERROR_HANDLE_(push_jmp_(comnd_code, operand_str, instructs, labels, &fixup),
-                                  fixup_dtor(&fixup); labels_dtor(&labels););
-                break;
-            }
-            case OPCODE_JE:
-            {
-                char* const operand_str = strchr(cmnd_str, '\0') + 1;
-                ASM_ERROR_HANDLE_(push_jmp_(comnd_code, operand_str, instructs, labels, &fixup),
-                                  fixup_dtor(&fixup); labels_dtor(&labels););
-                break;
-            }
-            case OPCODE_JNE:
-            {
-                char* const operand_str = strchr(cmnd_str, '\0') + 1;
-                ASM_ERROR_HANDLE_(push_jmp_(comnd_code, operand_str, instructs, labels, &fixup),
                                   fixup_dtor(&fixup); labels_dtor(&labels););
                 break;
             }
@@ -237,30 +175,7 @@ enum AsmError assembly(const asm_code_t asm_code, instructs_t* const instructs)
                 break;
             }
 
-            case OPCODE_RET:
-            {
-                cmnd_t cmnd = {.imm = 0, .reg = 0, .mem = 0, .opcode = comnd_code };
-                instructs_push_back(instructs, &cmnd, 1);
-                break;
-            }
-
             //--------------------------------
-
-            case OPCODE_DRAW:
-            {
-                cmnd_t cmnd = {.imm = 0, .reg = 0, .mem = 0, .opcode = comnd_code };
-                instructs_push_back(instructs, &cmnd, 1);
-                break;
-            }
-
-            //--------------------------------
-
-            case OPCODE_HLT:
-            {
-                cmnd_t cmnd = {.imm = 0, .reg = 0, .mem = 0, .opcode = comnd_code };
-                instructs_push_back(instructs, &cmnd, 1);
-                break;
-            }
 
             case OPCODE_UNKNOWN:
             {
@@ -281,6 +196,7 @@ enum AsmError assembly(const asm_code_t asm_code, instructs_t* const instructs)
         }
         ++ip;
     }
+
     FIXUP_ERROR_HANDLE_(fixup_processing(&fixup, instructs, labels), 
                         fixup_dtor(&fixup); labels_dtor(&labels););
 

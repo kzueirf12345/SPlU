@@ -56,17 +56,82 @@ void labels_dtor(labels_t* const labels)
 }
 
 
-void labels_push(labels_t* const labels, label_t label)
+static enum LabelsError labels_resize_(labels_t* labels, const size_t add_size);
+
+enum LabelsError labels_push(labels_t* const labels, label_t label)
 {
     lassert(labels, "");
     lassert(labels->labels, "");
     lassert(label.name, "");
     lassert(labels->count < labels->size, "");
 
-    labels->labels[labels->count].name = label.name; // TODO check count (not assert)
+    LABELS_ERROR_HANDLE(labels_resize_(labels, 1));
+
+    labels->labels[labels->count].name = label.name;
     labels->labels[labels->count].addr = label.addr;
     ++labels->count;
+
+    return LABELS_ERROR_SUCCESS;
 }
+
+static void* recalloc_(void* ptrmem, const size_t old_number, const size_t old_size,
+                                     const size_t     number, const size_t     size);
+
+static enum LabelsError labels_resize_(labels_t* labels, const size_t add_size)
+{
+    lassert(labels, "");
+
+    if (add_size == 0)
+        return LABELS_ERROR_SUCCESS;
+
+    if (labels->count + add_size >= labels->size)
+    {
+        const size_t new_size = MAX(labels->size * 2, labels->count + add_size);
+        
+        lassert(new_size > labels->size, "");
+
+        void* temp_data = recalloc_(labels->labels, 
+                                    labels->size, sizeof(*labels->labels),
+                                        new_size, sizeof(*labels->labels));
+        if (!temp_data)
+        {
+            fprintf(stderr, "Can't recalloc_\n");
+            return LABELS_ERROR_FAILURE;
+        }
+        labels->labels = temp_data; IF_DEBUG(temp_data = NULL;)
+
+        labels->size = new_size;
+    }
+
+    return LABELS_ERROR_SUCCESS;
+}
+
+static void* recalloc_(void* ptrmem, const size_t old_number, const size_t old_size,
+                                     const size_t     number, const size_t     size)
+{
+    lassert(ptrmem, "");
+    lassert(number, "");
+    lassert(size  , "");
+
+    if (number * size == old_number * old_size)
+        return ptrmem;
+
+    if (!(ptrmem = realloc(ptrmem, number * size)))
+    {
+        perror("Can't realloc in recalloc_");
+        return NULL;
+    }
+
+    if (number * size > old_number * old_size
+        && !memset((char*)ptrmem + old_number * old_size, 0, number * size - old_number * old_size))
+    {
+        perror("Can't memset in recalloc_");
+        return NULL;
+    }
+
+    return ptrmem;
+}
+
 
 label_t* labels_find(const labels_t labels, const char* const name)
 {
