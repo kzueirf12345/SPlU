@@ -60,7 +60,7 @@ DEPS_REL_PATH = $(OBJECTS_REL_PATH:%.o=%.d)
 all: build start
 
 start:
-	./$(PROJECT_NAME).out
+	./$(PROJECT_NAME).out $(OPTS)
 
 build: $(PROJECT_NAME).out
 

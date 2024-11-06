@@ -5,6 +5,21 @@
 
 int main()
 {
+    const char* input_filename = "../assets/program_code.bin";
+    int getopt_rez = 0;
+    while ((getopt_rez = getopt(argc, argv, "i:")) != -1)
+    {
+        switch (getopt_rez)
+        {
+        case 'i':
+            input_filename = optarg;
+            break;
+        default:
+            fprintf(stderr, "Getopt error: %d\n", (char)getopt_rez);
+            break;
+        }
+    }
+
     if (logger_ctor())
     {
         fprintf(stderr, "Can't logger_ctor()\n");
@@ -21,7 +36,7 @@ int main()
 
     processor_t processor = {}; 
     
-    PROCESSOR_ERROR_HANDLE(processor_ctor(&processor, "../assets/program_code.bin"), 
+    PROCESSOR_ERROR_HANDLE(processor_ctor(&processor, input_filename), 
                            logger_dtor(); processor_dtor(&processor););
     
     PROCESSOR_ERROR_HANDLE(processing(&processor), logger_dtor(); processor_dtor(&processor););

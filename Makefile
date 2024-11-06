@@ -57,7 +57,7 @@ rebuild: libs_rebuild assembler_rebuild processor_rebuild
 assembler_all: assembler_build assembler_start
 
 assembler_start:
-	@make ADD_FLAGS="$(ADD_FLAGS)" FLAGS="$(FLAGS)" DEBUG_=$(DEBUG_) start -C ./assembler/
+	@make ADD_FLAGS="$(ADD_FLAGS)" FLAGS="$(FLAGS)" DEBUG_=$(DEBUG_) OPTS="$(AOPTS)" start -C ./assembler/
 
 assembler_rebuild: assembler_clean assembler_build
 
@@ -71,7 +71,7 @@ assembler_clean:
 processor_all: processor_build processor_start
 
 processor_start:
-	@make ADD_FLAGS="$(ADD_FLAGS)" FLAGS="$(FLAGS)" DEBUG_=$(DEBUG_) start -C ./processor/
+	@make ADD_FLAGS="$(ADD_FLAGS)" FLAGS="$(FLAGS)" DEBUG_=$(DEBUG_) OPTS="$(POPTS)" start -C ./processor/
 
 processor_rebuild: processor_clean processor_build
 
