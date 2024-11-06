@@ -52,13 +52,13 @@ static enum AsmError push_jmp_(enum Opcode opcode, char* operand_str,
         }                                                                                           \
     } while(0)
 
-#define LABELS_ERROR_HANDLE_(call_func, ...)                                                         \
+#define LABELS_ERROR_HANDLE_(call_func, ...)                                                        \
     do {                                                                                            \
-        const enum LabelsError labels_error_handler = call_func;                                      \
-        if (labels_error_handler)                                                                    \
+        const enum LabelsError labels_error_handler = call_func;                                    \
+        if (labels_error_handler)                                                                   \
         {                                                                                           \
-            fprintf(stderr, "Can't " #call_func". Labels error: %s\n",                               \
-                            labels_strerror(labels_error_handler));                                   \
+            fprintf(stderr, "Can't " #call_func". Labels error: %s\n",                              \
+                            labels_strerror(labels_error_handler));                                 \
             __VA_ARGS__                                                                             \
             return ASM_ERROR_LABELS;                                                                \
         }                                                                                           \
@@ -66,6 +66,13 @@ static enum AsmError push_jmp_(enum Opcode opcode, char* operand_str,
 
 #define ASM_ERROR_HANDLE_(call_func, ...)                                                           \
         ASM_ERROR_HANDLE(call_func, fprintf(stderr, "Line: %zu\n", ip + 1); __VA_ARGS__)
+
+#define COMAND_HANDLE(cmd_name, do_it, ndo_it)                                                      \
+        case OPCODE_##cmd_name:                                                                     \
+        {                                                                                           \
+            do_it                                                                                   \
+            break;                                                                                  \
+        }   
 
 enum AsmError assembly(const asm_code_t asm_code, instructs_t* const instructs)
 {
@@ -90,101 +97,7 @@ enum AsmError assembly(const asm_code_t asm_code, instructs_t* const instructs)
 
         switch(comnd_code)
         {
-            case OPCODE_ZERO:
-            {
-                // прям как мой телефон - nothing
-                break;
-            }
-
-            case OPCODE_PUSH:
-            {
-                const char* operand_str = strchr(cmnd_str, '\0') + 1;
-                ASM_ERROR_HANDLE_(push_instruct_with_operand_(comnd_code, operand_str, instructs),
-                                  fixup_dtor(&fixup); labels_dtor(&labels););
-                break;
-            }
-
-            case OPCODE_POP:
-            {
-                // fprintf(stderr, "lol\n");
-                const char* operand_str = strchr(cmnd_str, '\0') + 1;
-                ASM_ERROR_HANDLE_(push_instruct_with_operand_(comnd_code, operand_str, instructs),
-                                  fixup_dtor(&fixup); labels_dtor(&labels););
-                break;
-            }
-
-            //--------------------------------
-
-            case OPCODE_ADD:
-            case OPCODE_SUB:
-            case OPCODE_MUL:
-            case OPCODE_DIV:
-            case OPCODE_MOD:
-            case OPCODE_SQR:
-
-            case OPCODE_OUT:
-            case OPCODE_IN:
-
-            case OPCODE_RET:
-
-            case OPCODE_DRAW:
-
-            case OPCODE_HLT:
-            {
-                cmnd_t cmnd = {.imm = 0, .reg = 0, .mem = 0, .opcode = comnd_code };
-                instructs_push_back(instructs, &cmnd, 1);
-                break;
-            }
-
-            //--------------------------------
-
-            case OPCODE_JMP:
-            case OPCODE_JL:
-            case OPCODE_JLE:
-            case OPCODE_JG:
-            case OPCODE_JGE:
-            case OPCODE_JE:
-            case OPCODE_JNE:
-            {
-
-                char* const operand_str = strchr(cmnd_str, '\0') + 1;
-                ASM_ERROR_HANDLE_(push_jmp_(comnd_code, operand_str, instructs, labels, &fixup), 
-                                  fixup_dtor(&fixup); labels_dtor(&labels););
-                break;
-            }
-
-            case OPCODE_LABEL:
-            {
-                char* const operand_str = cmnd_str + 1;
-                const label_t label = {.name = operand_str, .addr = instructs->counter};
-                if (!labels_push_unfinded(&labels, label))
-                {
-                    fprintf(stderr, "Can't push label %s in %zu line\n", operand_str, ip + 1);
-                    fixup_dtor(&fixup);
-                    labels_dtor(&labels);
-                    return ASM_ERROR_LABELS;
-                }
-                break;
-            }
-
-            case OPCODE_CALL:
-            {
-                char* const operand_str = strchr(cmnd_str, '\0') + 1;
-                ASM_ERROR_HANDLE_(push_jmp_(comnd_code, operand_str, instructs, labels, &fixup),
-                                  fixup_dtor(&fixup); labels_dtor(&labels););
-                break;
-            }
-
-            //--------------------------------
-
-            case OPCODE_UNKNOWN:
-            {
-                fprintf(stderr, "str: '%s'\n", cmnd_str);
-                fprintf(stderr, "Incorrect command in %zu line\n", ip + 1);
-                fixup_dtor(&fixup);
-                labels_dtor(&labels);
-                return ASM_ERROR_INCORRECT_CMND;
-            }
+            #include "commands.h"
 
             default:
             {
@@ -207,7 +120,10 @@ enum AsmError assembly(const asm_code_t asm_code, instructs_t* const instructs)
 }
 #undef ASM_ERROR_HANDLE_
 #undef LABELS_ERROR_HANDLE_
+#undef COMAND_HANDLE
 
+#define COMAND_HANDLE(cmd_name, ...) \
+        if (strcmp(cmnd_str, #cmd_name) == 0) return OPCODE_##cmd_name;
 static enum Opcode comnd_str_to_enum_(const char* const cmnd_str)
 {
     lassert(cmnd_str, "");
@@ -216,38 +132,13 @@ static enum Opcode comnd_str_to_enum_(const char* const cmnd_str)
 
     if (strcmp(cmnd_str, "") == 0 || cmnd_str[0] == COMMENT_SYMBOL) return OPCODE_ZERO;
 
-    if (strcmp(cmnd_str, "PUSH") == 0)                   return OPCODE_PUSH;
-    if (strcmp(cmnd_str, "POP")  == 0)                   return OPCODE_POP;
+    if (cmnd_str[0] == ':') return OPCODE_LABEL;
 
-    if (strcmp(cmnd_str, "ADD")  == 0)                   return OPCODE_ADD;
-    if (strcmp(cmnd_str, "SUB")  == 0)                   return OPCODE_SUB;
-    if (strcmp(cmnd_str, "MUL")  == 0)                   return OPCODE_MUL;
-    if (strcmp(cmnd_str, "DIV")  == 0)                   return OPCODE_DIV;
-    if (strcmp(cmnd_str, "MOD")  == 0)                   return OPCODE_MOD;
-    if (strcmp(cmnd_str, "SQR")  == 0)                   return OPCODE_SQR;
-
-    if (strcmp(cmnd_str, "OUT")  == 0)                   return OPCODE_OUT;
-    if (strcmp(cmnd_str, "IN")   == 0)                   return OPCODE_IN;
-
-    if (strcmp(cmnd_str, "JMP")  == 0)                   return OPCODE_JMP;
-    if (strcmp(cmnd_str, "JL")   == 0)                   return OPCODE_JL;
-    if (strcmp(cmnd_str, "JLE")  == 0)                   return OPCODE_JLE;
-    if (strcmp(cmnd_str, "JG")   == 0)                   return OPCODE_JG;
-    if (strcmp(cmnd_str, "JGE")  == 0)                   return OPCODE_JGE;
-    if (strcmp(cmnd_str, "JE")   == 0)                   return OPCODE_JE;
-    if (strcmp(cmnd_str, "JNE")  == 0)                   return OPCODE_JNE;
-    
-    if (cmnd_str[0]              == ':')                 return OPCODE_LABEL;
-
-    if (strcmp(cmnd_str, "CALL") == 0)                   return OPCODE_CALL;
-    if (strcmp(cmnd_str, "RET")  == 0)                   return OPCODE_RET;
-
-    if (strcmp(cmnd_str, "DRAW") == 0)                   return OPCODE_DRAW;
-
-    if (strcmp(cmnd_str, "HLT")  == 0)                   return OPCODE_HLT;
+    #include "commands.h"
     
     return OPCODE_UNKNOWN;
 }
+#undef COMAND_HANDLE
 
 static enum AsmError fill_cmnd_   (cmnd_t* const cmnd, enum Opcode opcode, 
                                    const char** const operand_str);

@@ -269,8 +269,8 @@ HLT
     PUSH R2
     SUB
     POP R0
+
     PUSH R0
-    
     PUSH R4
     SUB
     PUSH 2
