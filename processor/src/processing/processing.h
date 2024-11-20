@@ -6,6 +6,7 @@
 #include <assert.h>
 
 #include "utils.h"
+#include "../sdl/sdl.h"
 
 enum ProcessorError
 {
@@ -44,7 +45,7 @@ typedef struct Processor
 enum ProcessorError processor_ctor(processor_t* const processor, const char* const input_filename);
 void                processor_dtor(processor_t* const processor);
 
-enum ProcessorError processing(processor_t* const processor);
+enum ProcessorError processing(processor_t* const processor, const sdl_objs_t sdl_objs);
 
 #endif /*PROCESSOR_SRC_PROCESSING_H*/
 

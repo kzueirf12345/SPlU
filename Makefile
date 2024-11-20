@@ -25,13 +25,13 @@ FLAGS =	-Wall -Wextra -Waggressive-loop-optimizations \
 		-Wno-missing-field-initializers -Wno-narrowing -Wno-varargs \
 		-Wstack-protector -fcheck-new -fstack-protector -fstrict-overflow \
 		-flto-odr-type-merging -fno-omit-frame-pointer -Wlarger-than=81920 -Wstack-usage=81920 -pie \
-		-fPIE -Werror=vla -lm\
+		-fPIE -Werror=vla\
 
 SANITIZER = -fsanitize=address,alignment,bool,bounds,enum,float-cast-overflow,float-divide-by-zero,$\
 		integer-divide-by-zero,leak,nonnull-attribute,null,object-size,return,returns-nonnull-attribute,$\
 		shift,signed-integer-overflow,undefined,unreachable,vla-bound,vptr
 
-DEBUG_FLAGS = -D _DEBUG  -ggdb -Og -g3 -D_FORTIFY_SOURCES=3 $(SANITIZER) -D HASH_PROTECT
+DEBUG_FLAGS = -D _DEBUG  -ggdb -Og -g3 -D_FORTIFY_SOURCES=3 $(SANITIZER) # -D HASH_PROTECT
 RELEASE_FLAGS = -DNDEBUG -O2
 
 ifneq ($(DEBUG_),0)

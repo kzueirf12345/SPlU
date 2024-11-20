@@ -493,12 +493,30 @@ COMAND_HANDLE
     ),
     ARG_WITH_COMMA
     (
-        PROCESSOR_ERROR_HANDLE(draw_(*processor), 
+        PROCESSOR_ERROR_HANDLE(draw_(*processor, sdl_objs), 
                                stack_dtor(&stack); stack_dtor(&stack_ret););
                 
     )
 
 )
+
+COMAND_HANDLE
+(
+    DRAWT,
+    ARG_WITH_COMMA
+    (
+        cmnd_t cmnd = {.imm = 0, .reg = 0, .mem = 0, .opcode = comnd_code };
+        instructs_push_back(instructs, &cmnd, 1);
+    ),
+    ARG_WITH_COMMA
+    (
+        PROCESSOR_ERROR_HANDLE(drawt_(*processor), 
+                               stack_dtor(&stack); stack_dtor(&stack_ret););
+                
+    )
+
+)
+
 COMAND_HANDLE
 (
     HLT,
@@ -514,6 +532,32 @@ COMAND_HANDLE
             fprintf(stderr, "When program is end, stack wasn't empty\n");
 #endif /*NDEBUG*/
         is_hlt = true;
+    )
+)
+
+COMAND_HANDLE
+(
+    MEOW,
+    ARG_WITH_COMMA
+    (
+        cmnd_t cmnd = {.imm = 0, .reg = 0, .mem = 0, .opcode = comnd_code };
+        instructs_push_back(instructs, &cmnd, 1);
+    ),
+    ARG_WITH_COMMA
+    (
+        lassert(stack_size(stack) >= 1, "");
+
+        operand_t num = 0;
+        STACK_ERROR_HANDLE_(stack_pop(&stack, &num), 
+                            stack_dtor(&stack); stack_dtor(&stack_ret););
+
+        fprintf(stderr, "DEDLOX");
+        for (size_t i = 0; (operand_t)i < num; ++i) fprintf(stderr, "\n");
+        for (size_t i = 0; (operand_t)i < num; ++i)
+        {
+            fprintf(stderr, "MEOW ");
+        }
+        fprintf(stderr, "\n");
     )
 )
 

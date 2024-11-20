@@ -149,7 +149,8 @@ static enum ProcessorError fill_processor_data_(processor_t* const processor, FI
 static void       lassert_processor_init_(                const processor_t* const processor);
 static operand_t* get_operand_addr_      (cmnd_t cmnd,          processor_t* const processor);
 static void       jmp_condition_handle_  (const bool condition, processor_t* const processor);
-static enum ProcessorError draw_  (processor_t processor);
+static enum ProcessorError drawt_ (processor_t processor);
+static enum ProcessorError draw_  (processor_t processor, const sdl_objs_t sdl_objs);
 
 #define STACK_ERROR_HANDLE_(call_func, ...)                                                         \
     do {                                                                                            \
@@ -168,7 +169,7 @@ static enum ProcessorError draw_  (processor_t processor);
             break;                                                                                  \
         } 
         
-enum ProcessorError processing(processor_t* const processor)
+enum ProcessorError processing(processor_t* const processor, const sdl_objs_t sdl_objs)
 {
     lassert_processor_init_(processor);
 
@@ -284,7 +285,41 @@ static void jmp_condition_handle_(const bool condition, processor_t* const proce
     }
 }
 
-static enum ProcessorError draw_ (processor_t processor)
+static enum ProcessorError draw_ (processor_t processor, const sdl_objs_t sdl_objs)
+{
+    lassert(processor.memory, "");
+    static_assert(MEMORY_HEIGHT * MEMORY_WIDTH <= MEMORY_SIZE);
+
+    SDL_ShowWindow(sdl_objs.window);
+
+    SDL_SetRenderDrawColor(sdl_objs.renderer, 0x00, 0x00, 0x00, 0x00);
+    SDL_RenderClear(sdl_objs.renderer);
+
+    for (size_t row = 0; row < MEMORY_HEIGHT; ++row)
+    {
+        for (size_t col = 0; col < MEMORY_WIDTH; ++col)
+        {
+            const char out_sym = *(char*)(processor.memory + row * MEMORY_WIDTH + col);
+
+            if (MIN_VALID_OUTPUT_CHAR <= out_sym && out_sym <= MAX_VALID_OUTPUT_CHAR)
+            {
+                SDL_SetRenderDrawColor(sdl_objs.renderer, 0xFF, 0xFF, 0xFF, 0xFF);
+                SDL_Rect rect1 = {(int)(PIXEL_SIZE * col), (int)(PIXEL_SIZE * row), 
+                                        PIXEL_SIZE,              PIXEL_SIZE};
+                SDL_RenderFillRect(sdl_objs.renderer, &rect1);
+            }
+        }
+    }
+
+    SDL_RenderPresent(sdl_objs.renderer);
+    
+    SDL_Delay(3000);
+    SDL_HideWindow(sdl_objs.window);
+
+    return PROCESSOR_ERROR_SUCCESS;
+}
+
+static enum ProcessorError drawt_ (processor_t processor)
 {
     lassert(processor.memory, "");
     static_assert(MEMORY_HEIGHT * MEMORY_WIDTH <= MEMORY_SIZE);
@@ -301,21 +336,10 @@ static enum ProcessorError draw_ (processor_t processor)
         {
             const char out_sym = *(char*)(processor.memory + row * MEMORY_WIDTH + col);
 
-            if (MIN_VALID_OUTPUT_CHAR <= out_sym && out_sym <= MAX_VALID_OUTPUT_CHAR)
+            if (printf("%-3d", (int)out_sym) <= 0)
             {
-                if (putc(out_sym, stdout) != out_sym)
-                {
-                    perror("Can't putc out_sym");
-                    return PROCESSOR_ERROR_STANDARD_ERRNO;
-                }
-            }
-            else
-            {
-                if (putc(NVALID_OUTPUT_CHAR_VAL, stdout) != NVALID_OUTPUT_CHAR_VAL)
-                {
-                    perror("Can't putc nvalid char val");
-                    return PROCESSOR_ERROR_STANDARD_ERRNO;
-                }
+                perror("Can't printf outsym");
+                return PROCESSOR_ERROR_STANDARD_ERRNO;
             }
         }
 

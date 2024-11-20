@@ -44,11 +44,12 @@ endif
 
 FLAGS += $(ADD_FLAGS)
 
+LIBS = -L../libs/stack_on_array -lstack -L../libs/logger -llogger -lm -lSDL2
 
-DIRS = processing
+DIRS = processing sdl
 BUILD_DIRS = $(DIRS:%=$(BUILD_DIR)/%)
 
-SOURCES = main.c processing/processing.c
+SOURCES = main.c processing/processing.c sdl/sdl.c
 
 SOURCES_REL_PATH = $(SOURCES:%=$(SRC_DIR)/%)
 OBJECTS_REL_PATH = $(SOURCES:%.c=$(BUILD_DIR)/%.o)
@@ -65,7 +66,7 @@ build: $(PROJECT_NAME).out
 
 
 $(PROJECT_NAME).out: $(OBJECTS_REL_PATH)
-	@$(COMPILER) $(FLAGS) -o $@ $^ -L../libs/stack_on_array -lstack -L../libs/logger -llogger
+	@$(COMPILER) $(FLAGS) -o $@ $^ $(LIBS)
 
 $(BUILD_DIR)/%.o : $(SRC_DIR)/%.c | ./$(BUILD_DIR)/ $(BUILD_DIRS) logger_build
 	@$(COMPILER) $(FLAGS) -I../utils -I../libs -c -MMD -MP $< -o $@

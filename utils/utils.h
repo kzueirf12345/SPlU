@@ -50,10 +50,13 @@ enum Opcode
     OPCODE_RET      = 20,
 
     OPCODE_DRAW     = 21,
+    OPCODE_DRAWT    = 22,
 
-    OPCODE_HLT      = 22,
+    OPCODE_HLT      = 23,
 
-    OPCODE_UNKNOWN  = 23
+    OPCODE_UNKNOWN  = 24,
+
+    OPCODE_MEOW     = 25,
 };
 static_assert(OPCODE_UNKNOWN < (1 << MAX_OPCODE_BITS));
 
@@ -71,11 +74,13 @@ typedef int64_t operand_t;
 
 static const size_t REGS_SIZE    = 9;
 
-static const size_t MEMORY_HEIGHT = 30;
+static const size_t MEMORY_HEIGHT = 60;
 static const size_t MEMORY_WIDTH  = 60;
 static const size_t MEMORY_SIZE = MEMORY_HEIGHT * MEMORY_WIDTH;
 
-static const char MIN_VALID_OUTPUT_CHAR  = 34;
+static const size_t PIXEL_SIZE = 10;
+
+static const char MIN_VALID_OUTPUT_CHAR  = 47;
 static const char MAX_VALID_OUTPUT_CHAR  = 126;
 static const char NVALID_OUTPUT_CHAR_VAL = '.'; 
 
