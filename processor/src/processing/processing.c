@@ -172,6 +172,9 @@ static enum ProcessorError draw_  (processor_t processor, const sdl_objs_t sdl_o
 enum ProcessorError processing(processor_t* const processor, const sdl_objs_t sdl_objs)
 {
     lassert_processor_init_(processor);
+    
+    SDL_Event sdl_event = {};
+    bool is_quit_sdl = false;
 
     stack_key_t stack = 0;
     STACK_ERROR_HANDLE_(STACK_CTOR(&stack, sizeof(operand_t), 0), stack_dtor(&stack););
@@ -182,7 +185,7 @@ enum ProcessorError processing(processor_t* const processor, const sdl_objs_t sd
 
     bool is_hlt = false;
 
-    while (!is_hlt && processor->ip < processor->instructs_size)
+    while (!is_hlt && processor->ip < processor->instructs_size && !is_quit_sdl)
     {
         const cmnd_t cmnd = *(cmnd_t*)(processor->instructs + processor->ip);
         ++processor->ip;
@@ -197,6 +200,18 @@ enum ProcessorError processing(processor_t* const processor, const sdl_objs_t sd
                 stack_dtor(&stack);
                 stack_dtor(&stack_ret);
                 return PROCESSOR_ERROR_UNKNOWN_INSTRUCT;
+            }
+        }
+
+        if (SDL_PollEvent(&sdl_event))
+        {
+            switch (sdl_event.type)
+            {
+            case SDL_QUIT:
+                is_quit_sdl = true;
+                break;
+            default:
+                break;
             }
         }
     }
@@ -290,8 +305,6 @@ static enum ProcessorError draw_ (processor_t processor, const sdl_objs_t sdl_ob
     lassert(processor.memory, "");
     static_assert(MEMORY_HEIGHT * MEMORY_WIDTH <= MEMORY_SIZE);
 
-    SDL_ShowWindow(sdl_objs.window);
-
     SDL_SetRenderDrawColor(sdl_objs.renderer, 0x00, 0x00, 0x00, 0x00);
     SDL_RenderClear(sdl_objs.renderer);
 
@@ -312,9 +325,6 @@ static enum ProcessorError draw_ (processor_t processor, const sdl_objs_t sdl_ob
     }
 
     SDL_RenderPresent(sdl_objs.renderer);
-    
-    SDL_Delay(3000);
-    SDL_HideWindow(sdl_objs.window);
 
     return PROCESSOR_ERROR_SUCCESS;
 }

@@ -1,5 +1,6 @@
 #include <stdarg.h>
 #include <stdio.h>
+#include <errno.h>
 #include <SDL2/SDL.h>
 
 #include "sdl.h"
@@ -45,15 +46,23 @@ enum SdlError sdl_ctor(sdl_objs_t* const objs, const int screen_width, const int
         return SDL_ERROR_SDL;
     }
 
-    objs->window = SDL_CreateWindow("SPLU", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 
-                                    screen_width, screen_width, SDL_WINDOW_SHOWN);
+    fprintf(stderr, "errno: %d, %s\n", errno, strerror(errno));
+
+
+    objs->window = SDL_CreateWindow("SPLU", 
+                                    SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 
+                                    screen_width, screen_height, 
+                                    SDL_WINDOW_SHOWN);
+
+    errno = 0;
+
+    fprintf(stderr, "errno: %d, %s\n", errno, strerror(errno));
+
     if (!objs->window)
     {
         sdl_perror("Can't SDL_CreateWindow");
         return SDL_ERROR_SDL;
     }
-
-    SDL_HideWindow(objs->window);
 
     objs->renderer = SDL_CreateRenderer(objs->window, -1, SDL_RENDERER_ACCELERATED);
     if (!objs->window)
