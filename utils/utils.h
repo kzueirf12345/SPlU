@@ -55,9 +55,15 @@ enum Opcode
 
     OPCODE_HLT      = 23,
 
-    OPCODE_UNKNOWN  = 24,
+    OPCODE_POW      = 24,
 
-    OPCODE_MEOW     = 25,
+    OPCODE_EQ       = 25,
+    OPCODE_NEQ      = 26,
+    OPCODE_LESS     = 27,
+    OPCODE_LEQ      = 28,
+    OPCODE_GREAT    = 29,
+    OPCODE_GEQ      = 30,
+    OPCODE_UNKNOWN  = 31,
 };
 static_assert(OPCODE_UNKNOWN < (1 << MAX_OPCODE_BITS));
 

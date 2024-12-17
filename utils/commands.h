@@ -161,6 +161,174 @@ COMAND_HANDLE
 
 COMAND_HANDLE
 (
+    POW,
+    ARG_WITH_COMMA
+    (
+        cmnd_t cmnd = {.imm = 0, .reg = 0, .mem = 0, .opcode = comnd_code };
+        instructs_push_back(instructs, &cmnd, 1);
+    ),
+    ARG_WITH_COMMA
+    (
+        lassert(stack_size(stack) >= 2, "");
+
+        operand_t first_num = 0, second_num = 0;
+        STACK_ERROR_HANDLE_(stack_pop(&stack, &second_num), 
+                            stack_dtor(&stack); stack_dtor(&stack_ret););
+        STACK_ERROR_HANDLE_(stack_pop(&stack, &first_num),  
+                            stack_dtor(&stack); stack_dtor(&stack_ret););
+
+        const operand_t res = (operand_t)pow((double)first_num, (double)second_num);
+        STACK_ERROR_HANDLE_(stack_push(&stack, &res), 
+                            stack_dtor(&stack); stack_dtor(&stack_ret););
+    )
+)
+
+COMAND_HANDLE
+(
+    EQ,
+    ARG_WITH_COMMA
+    (
+        cmnd_t cmnd = {.imm = 0, .reg = 0, .mem = 0, .opcode = comnd_code };
+        instructs_push_back(instructs, &cmnd, 1);
+    ),
+    ARG_WITH_COMMA
+    (
+        lassert(stack_size(stack) >= 2, "");
+
+        operand_t first_num = 0, second_num = 0;
+        STACK_ERROR_HANDLE_(stack_pop(&stack, &second_num), 
+                            stack_dtor(&stack); stack_dtor(&stack_ret););
+        STACK_ERROR_HANDLE_(stack_pop(&stack, &first_num),  
+                            stack_dtor(&stack); stack_dtor(&stack_ret););
+
+        const operand_t res = (first_num == second_num);
+        STACK_ERROR_HANDLE_(stack_push(&stack, &res), 
+                            stack_dtor(&stack); stack_dtor(&stack_ret););
+    )
+)
+
+COMAND_HANDLE
+(
+    NEQ,
+    ARG_WITH_COMMA
+    (
+        cmnd_t cmnd = {.imm = 0, .reg = 0, .mem = 0, .opcode = comnd_code };
+        instructs_push_back(instructs, &cmnd, 1);
+    ),
+    ARG_WITH_COMMA
+    (
+        lassert(stack_size(stack) >= 2, "");
+
+        operand_t first_num = 0, second_num = 0;
+        STACK_ERROR_HANDLE_(stack_pop(&stack, &second_num), 
+                            stack_dtor(&stack); stack_dtor(&stack_ret););
+        STACK_ERROR_HANDLE_(stack_pop(&stack, &first_num),  
+                            stack_dtor(&stack); stack_dtor(&stack_ret););
+
+        const operand_t res = (first_num != second_num);
+        STACK_ERROR_HANDLE_(stack_push(&stack, &res), 
+                            stack_dtor(&stack); stack_dtor(&stack_ret););
+    )
+)
+
+COMAND_HANDLE
+(
+    LESS,
+    ARG_WITH_COMMA
+    (
+        cmnd_t cmnd = {.imm = 0, .reg = 0, .mem = 0, .opcode = comnd_code };
+        instructs_push_back(instructs, &cmnd, 1);
+    ),
+    ARG_WITH_COMMA
+    (
+        lassert(stack_size(stack) >= 2, "");
+
+        operand_t first_num = 0, second_num = 0;
+        STACK_ERROR_HANDLE_(stack_pop(&stack, &second_num), 
+                            stack_dtor(&stack); stack_dtor(&stack_ret););
+        STACK_ERROR_HANDLE_(stack_pop(&stack, &first_num),  
+                            stack_dtor(&stack); stack_dtor(&stack_ret););
+
+        const operand_t res = (first_num < second_num);
+        STACK_ERROR_HANDLE_(stack_push(&stack, &res), 
+                            stack_dtor(&stack); stack_dtor(&stack_ret););
+    )
+)
+
+COMAND_HANDLE
+(
+    LEQ,
+    ARG_WITH_COMMA
+    (
+        cmnd_t cmnd = {.imm = 0, .reg = 0, .mem = 0, .opcode = comnd_code };
+        instructs_push_back(instructs, &cmnd, 1);
+    ),
+    ARG_WITH_COMMA
+    (
+        lassert(stack_size(stack) >= 2, "");
+
+        operand_t first_num = 0, second_num = 0;
+        STACK_ERROR_HANDLE_(stack_pop(&stack, &second_num), 
+                            stack_dtor(&stack); stack_dtor(&stack_ret););
+        STACK_ERROR_HANDLE_(stack_pop(&stack, &first_num),  
+                            stack_dtor(&stack); stack_dtor(&stack_ret););
+
+        const operand_t res = (first_num <= second_num);
+        STACK_ERROR_HANDLE_(stack_push(&stack, &res), 
+                            stack_dtor(&stack); stack_dtor(&stack_ret););
+    )
+)
+
+COMAND_HANDLE
+(
+    GREAT,
+    ARG_WITH_COMMA
+    (
+        cmnd_t cmnd = {.imm = 0, .reg = 0, .mem = 0, .opcode = comnd_code };
+        instructs_push_back(instructs, &cmnd, 1);
+    ),
+    ARG_WITH_COMMA
+    (
+        lassert(stack_size(stack) >= 2, "");
+
+        operand_t first_num = 0, second_num = 0;
+        STACK_ERROR_HANDLE_(stack_pop(&stack, &second_num), 
+                            stack_dtor(&stack); stack_dtor(&stack_ret););
+        STACK_ERROR_HANDLE_(stack_pop(&stack, &first_num),  
+                            stack_dtor(&stack); stack_dtor(&stack_ret););
+
+        const operand_t res = (first_num > second_num);
+        STACK_ERROR_HANDLE_(stack_push(&stack, &res), 
+                            stack_dtor(&stack); stack_dtor(&stack_ret););
+    )
+)
+
+COMAND_HANDLE
+(
+    GEQ,
+    ARG_WITH_COMMA
+    (
+        cmnd_t cmnd = {.imm = 0, .reg = 0, .mem = 0, .opcode = comnd_code };
+        instructs_push_back(instructs, &cmnd, 1);
+    ),
+    ARG_WITH_COMMA
+    (
+        lassert(stack_size(stack) >= 2, "");
+
+        operand_t first_num = 0, second_num = 0;
+        STACK_ERROR_HANDLE_(stack_pop(&stack, &second_num), 
+                            stack_dtor(&stack); stack_dtor(&stack_ret););
+        STACK_ERROR_HANDLE_(stack_pop(&stack, &first_num),  
+                            stack_dtor(&stack); stack_dtor(&stack_ret););
+
+        const operand_t res = (first_num >= second_num);
+        STACK_ERROR_HANDLE_(stack_push(&stack, &res), 
+                            stack_dtor(&stack); stack_dtor(&stack_ret););
+    )
+)
+
+COMAND_HANDLE
+(
     MOD,
     ARG_WITH_COMMA
     (
@@ -535,31 +703,6 @@ COMAND_HANDLE
     )
 )
 
-COMAND_HANDLE
-(
-    MEOW,
-    ARG_WITH_COMMA
-    (
-        cmnd_t cmnd = {.imm = 0, .reg = 0, .mem = 0, .opcode = comnd_code };
-        instructs_push_back(instructs, &cmnd, 1);
-    ),
-    ARG_WITH_COMMA
-    (
-        lassert(stack_size(stack) >= 1, "");
-
-        operand_t num = 0;
-        STACK_ERROR_HANDLE_(stack_pop(&stack, &num), 
-                            stack_dtor(&stack); stack_dtor(&stack_ret););
-
-        fprintf(stderr, "DEDLOX");
-        for (size_t i = 0; (operand_t)i < num; ++i) fprintf(stderr, "\n");
-        for (size_t i = 0; (operand_t)i < num; ++i)
-        {
-            fprintf(stderr, "MEOW ");
-        }
-        fprintf(stderr, "\n");
-    )
-)
 
 COMAND_HANDLE
 (

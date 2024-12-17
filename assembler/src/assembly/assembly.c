@@ -2,6 +2,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <assert.h>
+#include <math.h>
 
 #include "assembly.h"
 #include "../asm_code/asm_code.h"

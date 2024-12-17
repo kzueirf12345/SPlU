@@ -10,7 +10,8 @@
 #include "stack_on_array/libstack.h"
 
 int main(int argc, char* argv[])
-{
+{    
+    fprintf(stderr, GREEN_TEXT("Hello assembler\n"));
     const char* input_filename  = "../../../assets/back_out.asm";
     const char* output_filename = "../../../assets/asm_out.bin";
     int getopt_rez = 0;
@@ -40,8 +41,6 @@ int main(int argc, char* argv[])
         fprintf(stderr, "Can't logger_set_level_details()\n");
         return EXIT_FAILURE;
     }
-    
-    printf(GREEN_TEXT("\nHello assembly!\n"));
 
 // ----------------------
 

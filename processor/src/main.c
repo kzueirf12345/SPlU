@@ -8,6 +8,8 @@
 
 int main(int argc, char* argv[])
 {
+    fprintf(stderr, GREEN_TEXT("Hello processor\n"));
+
     const char* input_filename = "../../../assets/asm_out.bin";
     int getopt_rez = 0;
     while ((getopt_rez = getopt(argc, argv, "i:")) != -1)
@@ -41,7 +43,6 @@ int main(int argc, char* argv[])
         sdl_dtor(&sdl_objs);
         return EXIT_FAILURE;
     }
-    printf(GREEN_TEXT("\nHello processor!\n"));
 
     //==============================
 
