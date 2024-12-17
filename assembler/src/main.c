@@ -11,8 +11,8 @@
 
 int main(int argc, char* argv[])
 {
-    const char* input_filename  = "../assets/program.asm";
-    const char* output_filename = "../assets/program_code.bin";
+    const char* input_filename  = "../../../assets/back_out.asm";
+    const char* output_filename = "../../../assets/asm_out.bin";
     int getopt_rez = 0;
     while ((getopt_rez = getopt(argc, argv, "o:i:")) != -1)
     {

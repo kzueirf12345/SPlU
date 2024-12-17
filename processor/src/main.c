@@ -8,7 +8,7 @@
 
 int main(int argc, char* argv[])
 {
-    const char* input_filename = "../assets/program_code.bin";
+    const char* input_filename = "../../../assets/asm_out.bin";
     int getopt_rez = 0;
     while ((getopt_rez = getopt(argc, argv, "i:")) != -1)
     {

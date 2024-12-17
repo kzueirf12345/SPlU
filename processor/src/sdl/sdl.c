@@ -46,17 +46,12 @@ enum SdlError sdl_ctor(sdl_objs_t* const objs, const int screen_width, const int
         return SDL_ERROR_SDL;
     }
 
-    fprintf(stderr, "errno: %d, %s\n", errno, strerror(errno));
-
-
     objs->window = SDL_CreateWindow("SPLU", 
                                     SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 
                                     screen_width, screen_height, 
                                     SDL_WINDOW_SHOWN);
 
     errno = 0;
-
-    fprintf(stderr, "errno: %d, %s\n", errno, strerror(errno));
 
     if (!objs->window)
     {
