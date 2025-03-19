@@ -317,10 +317,14 @@ static enum ProcessorError draw_ (processor_t processor, const sdl_objs_t sdl_ob
             if (MIN_VALID_OUTPUT_CHAR <= out_sym && out_sym <= MAX_VALID_OUTPUT_CHAR)
             {
                 SDL_SetRenderDrawColor(sdl_objs.renderer, 0xFF, 0xFF, 0xFF, 0xFF);
-                SDL_Rect rect1 = {(int)(PIXEL_SIZE * col), (int)(PIXEL_SIZE * row), 
-                                        PIXEL_SIZE,              PIXEL_SIZE};
-                SDL_RenderFillRect(sdl_objs.renderer, &rect1);
             }
+            else
+            {
+                SDL_SetRenderDrawColor(sdl_objs.renderer, 0x20, 0x20, 0x20, 0xFF);
+            }
+
+            SDL_Rect rect1 = {(int)(PIXEL_SIZE * col), (int)(PIXEL_SIZE * row), 9, 9};
+            SDL_RenderFillRect(sdl_objs.renderer, &rect1);
         }
     }
 

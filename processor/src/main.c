@@ -71,6 +71,7 @@ int main(int argc, char* argv[])
     }
 
     processor_dtor(&processor);
+    
     //==============================
 
     if (logger_dtor())
@@ -84,15 +85,3 @@ int main(int argc, char* argv[])
 
     return 0;
 }
-
-// #include <stdio.h>
-// // #include <SDL2/SDL.h>
-// #include <errno.h>
-// #include <string.h>
-
-// int main(int argc, char* argv[])
-// {
-//     fprintf(stderr, "errno: %d, %s\n", errno, strerror(errno));
-
-//     return 0;
-// }

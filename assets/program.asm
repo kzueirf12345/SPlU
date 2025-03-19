@@ -116,7 +116,7 @@ HLT
         JMP :start_circle
     :end_circle
 
-    DRAWT
+    ; DRAWT
     DRAW
 RET
 
