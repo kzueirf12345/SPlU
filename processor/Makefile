@@ -44,7 +44,7 @@ endif
 
 FLAGS += $(ADD_FLAGS)
 
-LIBS = -L../libs/stack_on_array -lstack -L../libs/logger -llogger -lm -lSDL2
+LIBS = -L../libs/stack_on_array -lstack -L../libs/logger -llogger -lm -lSDL2 -lSDL2main -lSDL2_ttf 
 
 DIRS = processing sdl
 BUILD_DIRS = $(DIRS:%=$(BUILD_DIR)/%)
@@ -59,7 +59,7 @@ DEPS_REL_PATH = $(OBJECTS_REL_PATH:%.o=%.d)
 all: build start
 
 start:
-	./$(PROJECT_NAME).out $(OPTS)
+	LD_LIBRARY_PATH=/usr/local/lib ./$(PROJECT_NAME).out $(OPTS)
 
 build: $(PROJECT_NAME).out
 

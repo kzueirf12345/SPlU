@@ -40,7 +40,7 @@ enum SdlError sdl_ctor(sdl_objs_t* const objs, const int screen_width, const int
 {
     lassert(objs, "");
 
-    if (SDL_Init(SDL_INIT_EVERYTHING)) 
+    if (SDL_Init(SDL_INIT_VIDEO)) 
     {
         sdl_perror("Can't SDl init");
         return SDL_ERROR_SDL;

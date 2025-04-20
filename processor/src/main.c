@@ -5,6 +5,7 @@
 
 #include "logger/liblogger.h"
 #include "processing/processing.h"
+#include "../../utils/utils.h"
 
 int main(int argc, char* argv[])
 {

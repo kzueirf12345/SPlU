@@ -334,6 +334,8 @@ static enum ProcessorError drawt_ (processor_t processor)
     lassert(processor.memory, "");
     static_assert(MEMORY_HEIGHT * MEMORY_WIDTH <= MEMORY_SIZE);
 
+    fprintf(stderr, RED_TEXT("SOSAL!\n"));
+
     if (putc('\n', stdout) != '\n')
     {
         perror("Can't putc \\n");
