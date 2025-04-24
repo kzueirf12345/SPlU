@@ -230,6 +230,7 @@ static void lassert_processor_init_(const processor_t* const processor)
     lassert(processor->instructs_size, "");
     lassert(processor->memory, "");
     lassert(processor->regs, "");
+    (void)processor;
 }
 
 static operand_t* get_operand_addr_(cmnd_t cmnd, processor_t* const processor)
